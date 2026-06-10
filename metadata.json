@@ -1,0 +1,8 @@
+{
+  "name": "كاشير برو | POS PRO",
+  "description": "نظام نقطة بيع متكامل يعمل بدون إنترنت مع تحليلات ذكية بإستخدام Gemini AI وإدارة متقدمة للمخزون والزبناء.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

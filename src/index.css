@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent: #10b981;
+}
+
+@layer base {
+  body {
+    @apply bg-[#F8FAFC] text-[#1E293B] font-sans antialiased selection:bg-blue-500/30;
+    transition: background-color 0.3s ease;
+    background-image: 
+      radial-gradient(at 0% 0%, var(--primary-glow, rgba(37, 99, 235, 0.05)) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, var(--primary-glow, rgba(37, 99, 235, 0.05)) 0px, transparent 50%);
+  }
+}
+
+@layer utilities {
+  .scanner-box {
+    @apply flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary)]/10;
+  }
+  
+  .cart-table {
+    @apply divide-y divide-slate-100 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-lg;
+  }
+  
+  .summary-card {
+    @apply rounded-[40px] bg-slate-900 p-10 shadow-2xl border border-slate-800;
+  }
+
+  .pos-btn {
+    @apply flex flex-col items-center justify-center p-8 rounded-[32px] border-2 border-slate-100 bg-white shadow-sm transition-all active:scale-95 font-black text-xs uppercase tracking-[0.2em] text-slate-400;
+    &:hover {
+      border-color: color-mix(in srgb, var(--primary), transparent 50%);
+      background-color: color-mix(in srgb, var(--primary), transparent 95%);
+      color: var(--primary);
+    }
+  }
+
+  .pos-btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 20px 40px -12px color-mix(in srgb, var(--primary), transparent 60%);
+    &:hover {
+      background-color: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+  }
+
+  .text-primary { color: var(--primary); }
+  .bg-primary { background-color: var(--primary); }
+  .border-primary { border-color: var(--primary); }
+  .shadow-primary { box-shadow: 0 10px 30px -5px color-mix(in srgb, var(--primary), transparent 50%); }
+
+  .text-accent { color: var(--accent); }
+  .bg-accent { background-color: var(--accent); }
+
+  .pos-btn-dark {
+    @apply bg-[#0F172A] border-slate-800 text-white hover:bg-black hover:border-slate-700;
+  }
+
+  .premium-card {
+    @apply rounded-[40px] bg-white border border-slate-200 p-8 shadow-xl shadow-slate-200/50 hover:border-slate-300 transition-all;
+  }
+
+  .glass-panel {
+    @apply backdrop-blur-2xl bg-white/80 border border-slate-200;
+  }
+
+  /* Custom subtle scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-[#E2E8F0] rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#CBD5E1];
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.printable-only {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* Hide the main React root app so it doesn't show in the print */
+  #root {
+    display: none !important;
+  }
+
+  /* Make sure html and body are printable */
+  html, body {
+    background: white !important;
+    color: black !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure printable-only elements are displayed as block on print */
+  .printable-only {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    z-index: 9999999 !important;
+  }
+
+  .printable-only * {
+    visibility: visible !important;
+  }
+}
+
+
