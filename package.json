@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -11,7 +11,7 @@
     "lint": "tsc --noEmit",
     "dev:electron": "concurrently \"vite\" \"wait-on tcp:5173 && electron .\"",
     "build:electron": "vite build && electron-builder",
-    "publish": "vite build && electron-builder --publish always"
+    "publish": "node publish.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
@@ -54,7 +54,7 @@
     "appId": "com.mourad.pos",
     "productName": "MOURAD",
     "directories": {
-      "output": "release"
+      "output": "C:/MOURAD_BUILD_OUTPUT"
     },
     "files": [
       "dist/**/*",

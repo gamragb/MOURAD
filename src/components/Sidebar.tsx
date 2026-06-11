@@ -33,9 +33,7 @@ export function Sidebar({
     { id: "pos", label: t("pos"), icon: ShoppingCart, show: true },
     { id: "stock", label: t("stock"), icon: Boxes, show: currentUser?.role === 'admin' || currentUser?.permissions?.stock },
     { id: "customers", label: t("customers"), icon: Users, show: currentUser?.role === 'admin' || currentUser?.permissions?.customers },
-    { id: "archive", label: t("archive"), icon: Archive, show: currentUser?.role === 'admin' || currentUser?.permissions?.history },
-    { id: "staff", label: isRtl ? "الموظفين" : "Staff", icon: Users, show: currentUser?.role === 'admin' },
-    { id: "logs", label: isRtl ? "النشاطات" : "Logs", icon: Archive, show: currentUser?.role === 'admin' },
+    { id: "archive", label: isRtl ? "الأرشيف والنشاطات" : "Archive & Logs", icon: Archive, show: currentUser?.role === 'admin' || currentUser?.permissions?.history },
     { id: "settings", label: t("settings"), icon: Settings, show: currentUser?.role === 'admin' },
   ];
 
@@ -59,7 +57,7 @@ export function Sidebar({
               BOUTABSSIL
             </span>
             <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mt-1 block opacity-70">
-              v.3.0
+              v0.1
             </span>
           </div>
         </div>

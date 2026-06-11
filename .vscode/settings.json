@@ -1,0 +1,14 @@
+{
+  "files.exclude": {
+    "release": true,
+    "dist": true
+  },
+  "search.exclude": {
+    "release": true,
+    "dist": true
+  },
+  "files.watcherExclude": {
+    "**/release/**": true,
+    "**/dist/**": true
+  }
+}

@@ -888,14 +888,23 @@ function MainLayout({
               />
             )}
             {activeTab === "archive" && (
-              <ArchiveView
-                key="archive"
-                appData={appData}
-                setAppData={setAppData}
-                t={t}
-                isRtl={isRtl}
-                currentUser={currentUser}
-              />
+              <div className="flex flex-col gap-10">
+                <ArchiveView
+                  key="archive"
+                  appData={appData}
+                  setAppData={setAppData}
+                  t={t}
+                  isRtl={isRtl}
+                  currentUser={currentUser}
+                />
+                <div className="pt-6 border-t border-slate-200">
+                  <h2 className="text-2xl font-black mb-6 px-4 italic text-slate-800">{isRtl ? "سجل النشاطات" : "Activity Logs"}</h2>
+                  <ActivityLogView
+                    key="logs"
+                    isRtl={isRtl}
+                  />
+                </div>
+              </div>
             )}
             {activeTab === "staff" && currentUser && (
               <StaffManagementView
@@ -906,12 +915,7 @@ function MainLayout({
                 t={t}
               />
             )}
-            {activeTab === "logs" && currentUser && (
-              <ActivityLogView
-                key="logs"
-                isRtl={isRtl}
-              />
-            )}
+            
             {activeTab === "notifications" && (
               <NotificationsView
                 key="notifications"
@@ -2114,7 +2118,7 @@ export function SettingsView({
           <div className="space-y-8">
             <div className={`flex items-center gap-4 p-5 rounded-[24px] bg-violet-50/50 border border-violet-100 ${isRtl ? "flex-row-reverse text-right" : "flex-row text-left"}`}>
               {firebaseUser.photoURL ? (
-                <img referrerPolicy="no-referrer" src={firebaseUser.photoURL} alt="User" className="h-14 w-14 rounded-full border-2 border-violet-500" />
+                <img referrerPolicy="no-referrer" src={firebaseUser.photoURL} alt="User" className="h-10 w-10 rounded-full border-2 border-violet-500" />
               ) : (
                 <div className="h-14 w-14 rounded-full bg-violet-200 border-2 border-violet-500 flex items-center justify-center text-violet-800 font-black">
                   {firebaseUser.displayName?.charAt(0) || "U"}
