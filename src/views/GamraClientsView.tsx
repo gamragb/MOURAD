@@ -2,73 +2,74 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Archive, Plus, Edit2, Trash2, 
-  Truck, X, DollarSign, Eye, ArrowUpDown
+  Users, X, DollarSign, Eye
 } from 'lucide-react';
 import { formatNumber, cn } from '../utils';
 import { storage, AppData, TransactionRecord } from '../storage';
 
-export default function GamraSupplierView({ permissions, appData, setAppData, language }: { permissions: any, appData: AppData, setAppData: any, language: string }) {
-  const suppliers = appData.suppliers || [];
+export default function GamraClientsView({ permissions, appData, setAppData, language }: { permissions: any, appData: AppData, setAppData: any, language: string }) {
+  const clients = appData.clients || [];
   const onRefresh = () => setAppData(storage.getData());
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<any>(null);
-  const [supplierDetails, setSupplierDetails] = useState<any>(null);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
+  const [clientDetails, setClientDetails] = useState<any>(null);
   const [adjustDebtModal, setAdjustDebtModal] = useState<any>(null);
 
   // Form States
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   
   // Stats
-  const totalSuppliers = suppliers.length;
-  const totalSupplierDebt = suppliers.reduce((sum, s) => sum + (s.debt || 0), 0);
+  const totalClients = clients.length;
+  const totalClientDebt = clients.reduce((sum, c) => sum + (c.debt || 0), 0);
   
-  const filteredSuppliers = useMemo(() => {
-    return suppliers.filter(s => 
-      s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      s.phone?.includes(searchQuery)
+  const filteredClients = useMemo(() => {
+    return clients.filter(c => 
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.phone?.includes(searchQuery)
     );
-  }, [suppliers, searchQuery]);
+  }, [clients, searchQuery]);
 
   const openAddModal = () => {
-    setEditingSupplier(null);
-    setName(''); setPhone(''); setEmail(''); setAddress(''); setNotes('');
-    setShowAddSupplierModal(true);
+    setEditingClient(null);
+    setName(''); setPhone(''); setAddress(''); setNotes('');
+    setShowAddClientModal(true);
   };
 
-  const openEditModal = (s: any) => {
-    setEditingSupplier(s);
-    setName(s.name || ''); setPhone(s.phone || ''); setEmail(s.email || ''); 
-    setAddress(s.address || ''); setNotes(s.notes || '');
-    setShowAddSupplierModal(true);
+  const openEditModal = (c: any) => {
+    setEditingClient(c);
+    setName(c.name || ''); setPhone(c.phone || ''); 
+    setAddress(c.address || ''); setNotes(c.notes || '');
+    setShowAddClientModal(true);
   };
 
-  const handleSaveSupplier = async (e: React.FormEvent) => {
+  const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return alert("يرجى إدخال اسم المورد");
+    if (!name) return alert("يرجى إدخال اسم الزبون");
     
-    const sData = { name, phone, email, address, notes };
+    const cData = { name, phone, address, notes };
     const data = storage.getData();
     
-    if (editingSupplier) {
-      data.suppliers = data.suppliers.map((sup: any) => sup.id === editingSupplier.id ? { ...sup, ...sData } : sup);
+    if (!data.clients) data.clients = [];
+
+    if (editingClient) {
+      data.clients = data.clients.map((cli: any) => cli.id === editingClient.id ? { ...cli, ...cData } : cli);
     } else {
-      data.suppliers.push({ ...sData, id: Date.now().toString(), debt: 0, transactions: [], createdAt: new Date().toISOString() });
+      data.clients.push({ ...cData, id: Date.now().toString(), debt: 0, transactions: [], paymentHistory: [], createdAt: new Date().toISOString() });
     }
     storage.saveData(data);
-    setShowAddSupplierModal(false);
+    setShowAddClientModal(false);
     onRefresh();
   };
 
-  const handleDeleteSupplier = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا المورد؟ لا يمكن التراجع عن هذا الإجراء.')) {
+  const handleDeleteClient = async (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا الزبون؟ لا يمكن التراجع عن هذا الإجراء.')) {
       const data = storage.getData();
-      data.suppliers = data.suppliers.filter((sup: any) => sup.id !== id);
+      data.clients = data.clients.filter((cli: any) => cli.id !== id);
       storage.saveData(data);
       onRefresh();
     }
@@ -86,8 +87,8 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
     if (!amount || amount <= 0) return;
 
     const data = storage.getData();
-    const supplierIndex = data.suppliers.findIndex((s:any) => s.id === adjustDebtModal.id);
-    if (supplierIndex === -1) return;
+    const clientIndex = data.clients.findIndex((c:any) => c.id === adjustDebtModal.id);
+    if (clientIndex === -1) return;
 
     const transaction: TransactionRecord = {
       id: Date.now().toString(),
@@ -101,20 +102,20 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
     };
 
     if (type === 'add') {
-      data.suppliers[supplierIndex].debt += amount;
+      data.clients[clientIndex].debt += amount;
     } else {
-      data.suppliers[supplierIndex].debt -= amount;
+      data.clients[clientIndex].debt -= amount;
     }
 
-    if (!data.suppliers[supplierIndex].transactions) {
-      data.suppliers[supplierIndex].transactions = [];
+    if (!data.clients[clientIndex].transactions) {
+      data.clients[clientIndex].transactions = [];
     }
-    data.suppliers[supplierIndex].transactions.unshift(transaction);
+    data.clients[clientIndex].transactions.unshift(transaction);
 
     storage.saveData(data);
     setAdjustDebtModal(null);
-    if (supplierDetails) {
-        setSupplierDetails(data.suppliers[supplierIndex]);
+    if (clientDetails) {
+        setClientDetails(data.clients[clientIndex]);
     }
     onRefresh();
   };
@@ -138,21 +139,21 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-            <Truck className="w-7 h-7 text-primary" />
-            إدارة الموردين
+            <Users className="w-7 h-7 text-primary" />
+            إدارة الزبائن
           </h1>
-          <p className="text-slate-500 text-sm mt-1">إدارة معلومات الموردين، وتتبع الحسابات والديون بسهولة</p>
+          <p className="text-slate-500 text-sm mt-1">إدارة معلومات الزبائن، وتتبع الحسابات والديون (الكريدي) بسهولة</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4" /> إضافة مورد
+            <Plus className="w-4 h-4" /> إضافة زبون
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard icon={Truck} title="إجمالي الموردين" value={totalSuppliers} colorClass="bg-blue-500/10 text-blue-500" />
-        <StatCard icon={DollarSign} title="مجموع ديون الموردين" value={true ? formatNumber(totalSupplierDebt) + " درهم" : '***'} colorClass="bg-red-500/10 text-red-500" />
+        <StatCard icon={Users} title="إجمالي الزبائن" value={totalClients} colorClass="bg-blue-500/10 text-blue-500" />
+        <StatCard icon={DollarSign} title="مجموع ديون الزبائن (كريدي)" value={true ? formatNumber(totalClientDebt) + " درهم" : '***'} colorClass="bg-red-500/10 text-red-500" />
       </div>
 
       {/* Filters and Search */}
@@ -161,7 +162,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input 
             type="text" 
-            placeholder="بحث باسم المورد، رقم الهاتف..."
+            placeholder="بحث باسم الزبون، رقم الهاتف..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-primary outline-none font-medium"
@@ -169,42 +170,42 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
         </div>
       </div>
 
-      {/* Suppliers Table */}
+      {/* Clients Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead className="bg-slate-50/50 border-b border-slate-200">
               <tr>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">اسم المورد</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">اسم الزبون</th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">التواصل</th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">الديون المستحقة (لك/عليك)</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">ديون الزبون (الكريدي)</th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {filteredSuppliers.length === 0 ? (
+              {filteredClients.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-3">
                       <Archive className="w-12 h-12 opacity-20" />
-                      <p className="font-bold text-lg">لا يوجد موردين</p>
-                      <p className="text-sm">لم يتم العثور على أي مورد يطابق بحثك.</p>
+                      <p className="font-bold text-lg">لا يوجد زبائن</p>
+                      <p className="text-sm">لم يتم العثور على أي زبون يطابق بحثك.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                filteredSuppliers.map((s: any) => (
-                  <tr key={s.id} className="hover:bg-slate-50/30 transition-colors">
+                filteredClients.map((c: any) => (
+                  <tr key={c.id} className="hover:bg-slate-50/30 transition-colors">
                     <td className="p-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 text-sm">{s.name}</span>
-                        {s.notes && <span className="text-[10px] text-slate-500 truncate max-w-[200px] mt-0.5">{s.notes}</span>}
+                        <span className="font-bold text-slate-900 text-sm">{c.name}</span>
+                        {c.notes && <span className="text-[10px] text-slate-500 truncate max-w-[200px] mt-0.5">{c.notes}</span>}
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-mono text-slate-500 font-bold">{s.phone || '—'}</span>
-                        {s.address && <span className="text-[10px] text-primary/80 font-medium">{s.address}</span>}
+                        <span className="text-sm font-mono text-slate-500 font-bold">{c.phone || '—'}</span>
+                        {c.address && <span className="text-[10px] text-primary/80 font-medium">{c.address}</span>}
                       </div>
                     </td>
                     <td className="p-4">
@@ -212,34 +213,34 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                         <div className="flex items-center gap-2">
                           <span className={cn(
                             "inline-flex items-center justify-center px-3 py-1 rounded-lg text-sm font-black shadow-sm border",
-                            (s.debt || 0) > 0 ? "bg-red-500/10 text-red-500 border-red-500/20" : 
-                            (s.debt || 0) < 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : 
+                            (c.debt || 0) > 0 ? "bg-red-500/10 text-red-500 border-red-500/20" : 
+                            (c.debt || 0) < 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : 
                             "bg-slate-50 border-slate-200 text-slate-500"
                           )}>
-                            {formatNumber(Math.abs(s.debt || 0))} درهم
+                            {formatNumber(Math.abs(c.debt || 0))} درهم
                           </span>
-                          {(s.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">عليك</span>}
-                          {(s.debt || 0) < 0 && <span className="text-[10px] font-bold text-green-500">لك</span>}
+                          {(c.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">كريدي</span>}
+                          {(c.debt || 0) < 0 && <span className="text-[10px] font-bold text-green-500">مسبق</span>}
                         </div>
                       ) : <span className="text-sm font-black text-slate-500">***</span>}
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
                         {true && (
-                          <button onClick={() => setAdjustDebtModal(s)} className="p-2 hover:bg-amber-500/10 text-amber-500 rounded-lg transition-colors group relative">
+                          <button onClick={() => setAdjustDebtModal(c)} className="p-2 hover:bg-amber-500/10 text-amber-500 rounded-lg transition-colors group relative">
                             <DollarSign className="w-4 h-4" />
                             <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">إدارة الديون</span>
                           </button>
                         )}
-                        <button onClick={() => setSupplierDetails(s)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
+                        <button onClick={() => setClientDetails(c)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
                           <Eye className="w-4 h-4" />
                           <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">التفاصيل والأرشيف</span>
                         </button>
-                        <button onClick={() => openEditModal(s)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors group relative">
+                        <button onClick={() => openEditModal(c)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors group relative">
                           <Edit2 className="w-4 h-4" />
                           <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">تعديل</span>
                         </button>
-                        <button onClick={() => handleDeleteSupplier(s.id)} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors group relative">
+                        <button onClick={() => handleDeleteClient(c.id)} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors group relative">
                           <Trash2 className="w-4 h-4" />
                           <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">حذف</span>
                         </button>
@@ -253,23 +254,23 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
         </div>
       </div>
 
-      {/* Supplier Details & History Modal */}
+      {/* Client Details & History Modal */}
       <AnimatePresence>
-        {supplierDetails && (
+        {clientDetails && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSupplierDetails(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setClientDetails(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
               <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30 shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-                    <Truck className="w-6 h-6" />
+                    <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900">{supplierDetails.name}</h3>
-                    <p className="text-xs font-bold text-slate-500 mt-1">{supplierDetails.phone} {supplierDetails.address ? `• ${supplierDetails.address}` : ''}</p>
+                    <h3 className="text-xl font-black text-slate-900">{clientDetails.name}</h3>
+                    <p className="text-xs font-bold text-slate-500 mt-1">{clientDetails.phone} {clientDetails.address ? `• ${clientDetails.address}` : ''}</p>
                   </div>
                 </div>
-                <button onClick={() => setSupplierDetails(null)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                <button onClick={() => setClientDetails(null)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -277,17 +278,17 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
                 <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-slate-500 mb-1">الرصيد الحالي (الدين)</p>
+                    <p className="text-sm font-bold text-slate-500 mb-1">الرصيد الحالي (الكريدي)</p>
                     <div className="flex items-center gap-3">
-                      <h2 className={cn("text-3xl font-black", (supplierDetails.debt || 0) > 0 ? "text-red-500" : "text-green-500")}>
-                        {formatNumber(Math.abs(supplierDetails.debt || 0))} درهم
+                      <h2 className={cn("text-3xl font-black", (clientDetails.debt || 0) > 0 ? "text-red-500" : "text-green-500")}>
+                        {formatNumber(Math.abs(clientDetails.debt || 0))} درهم
                       </h2>
-                      {(supplierDetails.debt || 0) > 0 && <span className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-bold">عليك</span>}
-                      {(supplierDetails.debt || 0) < 0 && <span className="bg-green-500/10 text-green-500 px-2 py-1 rounded text-xs font-bold">لك</span>}
+                      {(clientDetails.debt || 0) > 0 && <span className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-bold">كريدي غير مدفوع</span>}
+                      {(clientDetails.debt || 0) < 0 && <span className="bg-green-500/10 text-green-500 px-2 py-1 rounded text-xs font-bold">دفع مسبق</span>}
                     </div>
                   </div>
                   {true && (
-                    <button onClick={() => setAdjustDebtModal(supplierDetails)} className="px-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-md shadow-primary/20 transition-all flex items-center gap-2">
+                    <button onClick={() => setAdjustDebtModal(clientDetails)} className="px-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-md shadow-primary/20 transition-all flex items-center gap-2">
                       <DollarSign className="w-5 h-5" /> إدارة الديون
                     </button>
                   )}
@@ -295,7 +296,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
 
                 <div>
                   <h4 className="font-black text-slate-900 mb-4 flex items-center gap-2">
-                    <Archive className="w-5 h-5 text-primary" /> سجل المعاملات والديون
+                    <Archive className="w-5 h-5 text-primary" /> سجل المعاملات والكريدي
                   </h4>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
                     <table className="w-full text-right">
@@ -308,14 +309,14 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border-subtle">
-                        {(!supplierDetails.transactions || supplierDetails.transactions.length === 0) ? (
+                        {(!clientDetails.transactions || clientDetails.transactions.length === 0) ? (
                           <tr>
                             <td colSpan={4} className="p-8 text-center text-slate-500 font-bold text-sm">
                               لا توجد معاملات سابقة مسجلة.
                             </td>
                           </tr>
                         ) : (
-                          supplierDetails.transactions.map((t:any) => (
+                          clientDetails.transactions.map((t:any) => (
                             <tr key={t.id} className="hover:bg-white/50 transition-colors">
                               <td className="p-3 text-sm font-bold text-slate-500" dir="ltr">
                                 {new Date(t.date).toLocaleString('fr-FR')}
@@ -323,11 +324,11 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                               <td className="p-3">
                                 {t.type === 'charge' ? (
                                   <span className="inline-flex px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-500/20">
-                                    إضافة دين
+                                    إضافة كريدي
                                   </span>
                                 ) : (
                                   <span className="inline-flex px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-                                    دفع مبلغ
+                                    تخليص مبلغ
                                   </span>
                                 )}
                               </td>
@@ -336,7 +337,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                                   {t.type === 'charge' ? '+' : '-'}{formatNumber(t.amount)} درهم
                                 </span>
                               </td>
-                              <td className="p-3 text-sm text-text-secondary font-medium">
+                              <td className="p-3 text-sm text-slate-500 font-medium">
                                 {t.note || '—'}
                                 {t.paymentMethod === 'check' && (
                                   <div className="mt-1 text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded inline-block font-bold">
@@ -364,7 +365,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <div className="p-6 border-b border-slate-200 bg-slate-50/30">
                 <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <DollarSign className="w-6 h-6 text-primary" />
-                  إدارة ديون المورد
+                  إدارة الكريدي
                 </h3>
                 <p className="text-sm text-slate-500 mt-1 font-bold">{adjustDebtModal.name}</p>
               </div>
@@ -373,13 +374,13 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="pay" defaultChecked className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-green-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      دفع مبلغ للمورد
+                      دفع مبلغ (تخليص)
                     </div>
                   </label>
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="add" className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-red-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      إضافة دين جديد
+                      إضافة كريدي جديد
                     </div>
                   </label>
                 </div>
@@ -394,7 +395,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
 
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">ملاحظة أو وصف</label>
-                  <input name="note" type="text" placeholder="مثال: دفعة من حساب فاتورة شهر 5..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
+                  <input name="note" type="text" placeholder="مثال: دفعة من حساب كريدي الأمس..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
                 </div>
 
                 <div className="space-y-3 pt-2">
@@ -427,59 +428,54 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setAdjustDebtModal(null)} className="flex-1 py-3 bg-bg-body border border-border-subtle text-text-secondary rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">إلغاء</button>
-                  <button type="submit" className="flex-1 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-accent/20 hover:bg-accent/90 transition-all">تأكيد العملية</button>
+                  <button type="button" onClick={() => setAdjustDebtModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">إلغاء</button>
+                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">تأكيد العملية</button>
                 </div>
               </form>
             </motion.div>
           </div>
         )}
 
-        {/* Add / Edit Supplier Modal */}
-        {showAddSupplierModal && (
+        {/* Add / Edit Client Modal */}
+        {showAddClientModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddSupplierModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddClientModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
               <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
                 <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <Truck className="w-6 h-6 text-primary" />
-                  {editingSupplier ? 'تعديل المورد' : 'إضافة مورد جديد'}
+                  <Users className="w-6 h-6 text-primary" />
+                  {editingClient ? 'تعديل الزبون' : 'إضافة زبون جديد'}
                 </h3>
-                <button onClick={() => setShowAddSupplierModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                <button onClick={() => setShowAddClientModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleSaveSupplier} className="p-6">
+              <form onSubmit={handleSaveClient} className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">اسم المورد أو الشركة *</label>
-                    <input autoFocus required type="text" placeholder="مثال: شركة الحليب..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">اسم الزبون *</label>
+                    <input autoFocus required type="text" placeholder="مثال: أحمد..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-1 md:col-span-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">رقم الهاتف</label>
                     <input type="text" placeholder="06..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">البريد الإلكتروني</label>
-                    <input type="email" placeholder="example@email.com" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={email} onChange={e => setEmail(e.target.value)} />
-                  </div>
-
                   <div className="space-y-1 md:col-span-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">العنوان</label>
-                    <input type="text" placeholder="عنوان المورد..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={address} onChange={e => setAddress(e.target.value)} />
+                    <input type="text" placeholder="عنوان الزبون..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={address} onChange={e => setAddress(e.target.value)} />
                   </div>
 
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ملاحظات</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ملاحظات (اختياري)</label>
                     <textarea rows={3} placeholder="أي معلومات إضافية..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none" value={notes} onChange={e => setNotes(e.target.value)} />
                   </div>
                 </div>
 
                 <div className="mt-8 flex gap-3">
-                  <button type="button" onClick={() => setShowAddSupplierModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">إلغاء</button>
-                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ المورد</button>
+                  <button type="button" onClick={() => setShowAddClientModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">إلغاء</button>
+                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ الزبون</button>
                 </div>
               </form>
             </motion.div>

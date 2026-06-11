@@ -19,10 +19,13 @@ export interface PaymentRecord {
 
 export interface TransactionRecord {
   id: string;
-  type: 'PAYMENT' | 'DEBT' | 'SALE';
+  type: 'PAYMENT' | 'DEBT' | 'SALE' | 'charge' | 'payment';
   amount: number;
   date: string;
   description: string;
+  note?: string;
+  paymentMethod?: string;
+  checkNumber?: string;
 }
 
 export interface Client {
@@ -74,7 +77,9 @@ export interface Sale {
   total: number;
   discount: number;
   finalTotal: number;
-  paymentMethod: 'cash' | 'card' | 'wallet' | 'credit';
+  paymentMethod: 'cash' | 'card' | 'wallet' | 'credit' | 'check';
+  type?: 'sale' | 'return';
+  checkNumber?: string;
   items: SaleItem[];
   date: string;
   userId: string;

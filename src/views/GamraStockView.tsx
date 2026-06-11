@@ -1,30 +1,20 @@
-// @ts-nocheck
-
-export type Product = any;
-export type Category = any;
-export type Supplier = any;
-export type Cheque = any;
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, Archive, ArrowRightLeft, FolderOpen, Plus, Edit2, Trash2, 
-  AlertTriangle, Store, X, Package, LayoutGrid, Save, Download, Upload, ArrowUpDown, ChevronDown
+import {
+  Search, Archive, Plus, Edit2, Trash2, 
+  AlertTriangle, Store, X, Package, LayoutGrid, Save, ArrowUpDown, Tag, DollarSign, Boxes, Download, Upload, Eye
 } from 'lucide-react';
 import { formatNumber, cn } from '../utils';
-
-
 import { storage, AppData } from '../storage';
-
 
 type SortKey = 'name' | 'price' | 'costPrice' | 'qty' | 'supplier';
 type SortConfig = { key: SortKey; direction: 'asc' | 'desc' } | null;
 
-export default function GamraStockView({ permissions, appData, setAppData, t, language }: { permissions: any, appData: AppData, setAppData: any, t: any, language: string }) {
+export default function GamraStockView({ permissions, appData, setAppData, language }: { permissions: any, appData: AppData, setAppData: any, language: string }) {
   const products = appData.products || [];
   const categories = appData.categories || [];
   const suppliers = appData.suppliers || [];
   const onRefresh = () => setAppData(storage.getData());
-  const setMessage = (msg: any) => console.log(msg);
 
   const api = {
     addCategory: async (name: string) => { const data = storage.getData(); data.categories.push({ id: Date.now().toString(), name }); storage.saveData(data); },
@@ -32,221 +22,37 @@ export default function GamraStockView({ permissions, appData, setAppData, t, la
     addProduct: async (p: any) => { const data = storage.getData(); data.products.push({ ...p, id: Date.now().toString() }); storage.saveData(data); },
     updateProduct: async (id: string, p: any) => { const data = storage.getData(); data.products = data.products.map((prod: any) => prod.id === id ? { ...prod, ...p } : prod); storage.saveData(data); },
     deleteProduct: async (id: string) => { const data = storage.getData(); data.products = data.products.filter((prod: any) => prod.id !== id); storage.saveData(data); },
-    adjustStock: async (id: string, adj: any) => { const data = storage.getData(); const p = data.products.find((prod: any) => prod.id === id); if (p) { if (adj.type === 'in') p.qty += adj.quantity; else p.qty -= adj.quantity; storage.saveData(data); } },
-    addSupplier: async (s: any) => { const data = storage.getData(); data.suppliers.push({ ...s, id: Date.now().toString() }); storage.saveData(data); }
+    adjustStock: async (id: string, adj: any) => { const data = storage.getData(); const p = data.products.find((prod: any) => prod.id === id); if (p) { if (adj.type === 'in') p.qty += adj.quantity; else p.qty -= adj.quantity; storage.saveData(data); } }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [filterStockStatus, setFilterStockStatus] = useState<'all' | 'inStock' | 'lowStock' | 'outOfStock'>('all');
   
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [adjustModal, setAdjustModal] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
 
-  // --- Add/Edit Product State ---
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
+  // Form States
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [costPrice, setCostPrice] = useState('');
   const [qty, setQty] = useState('');
-  const [minStock, setMinStock] = useState('5');
+  const [minQty, setMinQty] = useState('5');
   const [barcode, setBarcode] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [supplier, setSupplier] = useState('');
-
-  // --- Category & Supplier Modals ---
+  
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [showQuickSupplierModal, setShowQuickSupplierModal] = useState(false);
-  const [quickSupplierName, setQuickSupplierName] = useState('');
-
-  // --- View Controls ---
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategoryId, setFilterCategoryId] = useState('');
-  const [filterStockStatus, setFilterStockStatus] = useState<'all' | 'inStock' | 'lowStock' | 'outOfStock'>('all');
-  const [showGrouped, setShowGrouped] = useState(false);
-  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-
-  // --- Stock Adjustment State ---
-  const [showAdjModal, setShowAdjModal] = useState(false);
-  const [adjProduct, setAdjProduct] = useState<Product | null>(null);
-  const [adjType, setAdjType] = useState<'in' | 'out'>('in');
-  const [adjOutReason, setAdjOutReason] = useState<'damage' | 'return'>('damage');
-  const [adjQty, setAdjQty] = useState('');
-  const [adjReason, setAdjReason] = useState('');
-  const [adjSupplierId, setAdjSupplierId] = useState('');
-  const [adjCostPrice, setAdjCostPrice] = useState('');
-
-  // --- Edit Modal State ---
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '', price: '', costPrice: '', qty: '', minStock: '', barcode: '', categoryId: '', supplier: ''
-  });
-
-  // --- CSV Import/Export ---
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isImporting, setIsImporting] = useState(false);
-
-  // ============================================================================
-  // Handlers
-  // ============================================================================
-
-  const addCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-    try {
-      await api.addCategory(newCategoryName.trim());
-      setNewCategoryName('');
-      setMessage({ text: language === 'ar' ? "تمت إضافة الفئة." : "Category added.", type: 'success' });
-      onRefresh();
-    } catch (err) {
-      setMessage({ text: language === 'ar' ? "فشل إضافة الفئة." : "Failed to add category.", type: 'error' });
-    }
-  };
-
-  const addQuickSupplier = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickSupplierName.trim()) return;
-    try {
-      await api.addSupplier({ name: quickSupplierName.trim(), debt: 0 });
-      setSupplier(quickSupplierName.trim());
-      setQuickSupplierName('');
-      setShowQuickSupplierModal(false);
-      setMessage({ text: language === 'ar' ? "تمت إضافة المورد بنجاح." : "Supplier added successfully.", type: 'success' });
-      onRefresh();
-    } catch (err) {
-      setMessage({ text: "Failed to add supplier.", type: 'error' });
-    }
-  };
-
-  const seedDefaults = async () => {
-    const defaults = [
-      { en: "Peinture", ar: "الصباغة" }, { en: "Visserie", ar: "الفيس و البراغي" },
-      { en: "Outillage", ar: "الأدوات" }, { en: "Électricité", ar: "الكهرباء" },
-      { en: "Plomberie", ar: "الترصيص / الما" }, { en: "Matériaux", ar: "مواد البناء" },
-      { en: "Quincaillerie", ar: "خردوات متنوعة" }
-    ];
-    try {
-      for (const cat of defaults) {
-        const n = language === 'ar' ? `${cat.ar} (${cat.en})` : `${cat.en} (${cat.ar})`;
-        if (!categories.find(c => c.name.includes(cat.en) || c.name.includes(cat.ar))) {
-          await api.addCategory(n);
-        }
-      }
-      onRefresh();
-      setMessage({ text: language === 'ar' ? "تم تحديث الفئات الافتراضية." : "Default categories seeded.", type: 'success' });
-    } catch (err) {
-      setMessage({ text: "Error seeding categories.", type: 'error' });
-    }
-  };
-
-  const deleteCategory = async (id: string) => {
-    if(!window.confirm(language === 'ar' ? "هل أنت متأكد من حذف هذه الفئة؟" : "Delete this category?")) return;
-    try {
-      await api.deleteCategory(id);
-      onRefresh();
-      setMessage({ text: language === 'ar' ? "تم حذف الفئة." : "Category deleted.", type: 'success' });
-    } catch (err) {
-      setMessage({ text: language === 'ar' ? "فشل الحذف." : "Delete failed.", type: 'error' });
-    }
-  };
-
-  const addProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !price || !qty) return;
-    try {
-      await api.addProduct({
-        name,
-        price: parseFloat(price),
-        costPrice: parseFloat(costPrice) || 0,
-        qty: parseFloat(qty),
-        minStock: parseFloat(minStock) || 0,
-        barcode: barcode || null,
-        categoryId: categoryId || null,
-        supplier: supplier || null,
-        supplierId: suppliers.find(s => s.name === supplier)?.id || null
-      });
-      setName(''); setPrice(''); setCostPrice(''); setQty(''); setBarcode(''); setMinStock('5'); setCategoryId(''); setSupplier('');
-      setMessage({ text: language === 'ar' ? "تمت إضافة المنتج." : "Product added to inventory.", type: 'success' });
-      onRefresh();
-    } catch (err: any) {
-      setMessage({ text: `${language === 'ar' ? 'فشل' : 'Failed'}: ${err.message}`, type: 'error' });
-    }
-  };
-
-  const updateStock = async (id: string, newQty: number) => {
-    if (newQty < 0) return;
-    const p = products.find(prod => prod.id === id);
-    if (!p) return;
-    try {
-      await api.updateProduct(id, { ...p, qty: newQty });
-      onRefresh();
-    } catch (err) {
-      setMessage({ text: language === 'ar' ? "تم رفض التعديل." : "Adjustment rejected.", type: 'error' });
-    }
-  };
-
-  const handleUpdateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProduct) return;
-    try {
-      await api.updateProduct(editingProduct.id, {
-        ...editingProduct,
-        name: editForm.name,
-        price: parseFloat(editForm.price),
-        costPrice: parseFloat(editForm.costPrice) || 0,
-        qty: parseFloat(editForm.qty),
-        minStock: parseFloat(editForm.minStock) || 0,
-        barcode: editForm.barcode || null,
-        categoryId: editForm.categoryId || null,
-        supplier: editForm.supplier || null,
-        supplierId: suppliers.find(s => s.name === editForm.supplier)?.id || null
-      });
-      setEditingProduct(null);
-      setMessage({ text: language === 'ar' ? "تم تحديث المنتج." : "Product updated.", type: 'success' });
-      onRefresh();
-    } catch (err: any) {
-      setMessage({ text: `${language === 'ar' ? 'فشل' : 'Failed'}: ${err.message}`, type: 'error' });
-    }
-  };
-
-  const startEditing = (p: Product) => {
-    setEditingProduct(p);
-    setEditForm({
-      name: p.name,
-      price: p.price.toString(),
-      costPrice: (p.costPrice || 0).toString(),
-      qty: p.qty.toString(),
-      minStock: (p.minStock ?? 5).toString(),
-      barcode: p.barcode || '',
-      categoryId: p.categoryId || '',
-      supplier: p.supplier || ''
-    });
-  };
-
-  const handleStockAdjust = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adjProduct || !adjQty) return;
-    try {
-      const stored = localStorage.getItem('pos_user');
-      const actor = stored ? JSON.parse(stored).username : 'system';
-
-      // Determine final supplier ID based on selection
-      // If IN -> use adjSupplierId if provided
-      // If OUT -> only use adjSupplierId if reason is 'return'
-      const finalSupplierId = adjType === 'in' ? adjSupplierId : (adjType === 'out' && adjOutReason === 'return' ? adjSupplierId : null);
-
-      const finalReason = adjType === 'out' && adjOutReason === 'damage' ? `[DAMAGE] ${adjReason}` : adjReason;
-
-      await api.adjustStock(adjProduct.id, {
-        type: adjType,
-        quantity: parseFloat(adjQty),
-        reason: finalReason,
-        actor: actor,
-        supplierId: finalSupplierId || null,
-        costPrice: adjCostPrice ? parseFloat(adjCostPrice) : undefined
-      });
-      setShowAdjModal(false);
-      setAdjQty(''); setAdjReason(''); setAdjSupplierId('');
-      setMessage({ text: language === 'ar' ? "تم تعديل المخزون." : "Stock adjusted successfully.", type: 'success' });
-      onRefresh();
-    } catch (err) {
-      setMessage({ text: "Adjustment failed.", type: 'error' });
-    }
-  };
+  
+  // Stats
+  const totalProducts = products.length;
+  const totalValue = products.reduce((sum, p) => sum + ((p.costPrice || p.price) * (p.qty || 0)), 0);
+  const lowStockCount = products.filter(p => p.qty <= (p.minQty || 5) && p.qty > 0).length;
+  const outOfStockCount = products.filter(p => p.qty <= 0).length;
 
   const handleSort = (key: SortKey) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -254,621 +60,427 @@ export default function GamraStockView({ permissions, appData, setAppData, t, la
     setSortConfig({ key, direction });
   };
 
-  const getSortIcon = (key: SortKey) => {
-    if (sortConfig?.key !== key) return <ArrowUpDown className="w-3 h-3 opacity-30 inline ml-1" />;
-    return <ArrowUpDown className={cn("w-3 h-3 inline ml-1 text-accent", sortConfig.direction === 'desc' && "rotate-180")} />;
-  };
-
-  const exportToCSV = () => {
-    const headers = language === 'ar' 
-      ? ['الاسم', 'الباركود', 'الفئة', 'الثمن', 'التكلفة', 'الكمية', 'التنبيه', 'المورد']
-      : ['Name', 'Barcode', 'Category', 'Price', 'Cost Price', 'Qty', 'Min Stock', 'Supplier'];
-    
-    const rows = processedProducts.map(p => [
-      `"${p.name.replace(/"/g, '""')}"`, 
-      p.barcode ? `"${p.barcode}"` : '', 
-      `"${categories.find(c => c.id === p.categoryId)?.name || ''}"`, 
-      p.price, 
-      p.costPrice || 0, 
-      p.qty, 
-      p.minStock || 5, 
-      p.supplier ? `"${p.supplier}"` : ''
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `inventory_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsImporting(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        const lines = text.split('\n');
-        if (lines.length < 2) throw new Error("File empty or missing headers");
-
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const nameIdx = headers.findIndex(h => h.includes('name') || h.includes('اسم'));
-        const barcodeIdx = headers.findIndex(h => h.includes('barcode') || h.includes('باركود'));
-        const priceIdx = headers.findIndex(h => h.includes('price') || h.includes('ثمن'));
-        const costIdx = headers.findIndex(h => h.includes('cost') || h.includes('تكلفة'));
-        const qtyIdx = headers.findIndex(h => h.includes('qty') || h.includes('كمية'));
-        const minStockIdx = headers.findIndex(h => h.includes('min') || h.includes('تنبيه'));
-        const supplierIdx = headers.findIndex(h => h.includes('supplier') || h.includes('مورد'));
-        
-        let importedCount = 0;
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue;
-          
-          // Basic CSV parsing handling quotes
-          const cols: string[] = [];
-          let current = '';
-          let inQuotes = false;
-          for (let char of lines[i]) {
-            if (char === '"') inQuotes = !inQuotes;
-            else if (char === ',' && !inQuotes) { cols.push(current); current = ''; }
-            else current += char;
-          }
-          cols.push(current);
-          
-          const name = nameIdx >= 0 ? cols[nameIdx]?.replace(/^"|"$/g, '').trim() : '';
-          if (!name) continue;
-          
-          await api.addProduct({
-            name,
-            barcode: barcodeIdx >= 0 ? cols[barcodeIdx]?.replace(/^"|"$/g, '').trim() : null,
-            price: priceIdx >= 0 ? parseFloat(cols[priceIdx]) || 0 : 0,
-            costPrice: costIdx >= 0 ? parseFloat(cols[costIdx]) || 0 : 0,
-            qty: qtyIdx >= 0 ? parseFloat(cols[qtyIdx]) || 0 : 0,
-            minStock: minStockIdx >= 0 ? parseFloat(cols[minStockIdx]) || 5 : 5,
-            supplier: supplierIdx >= 0 ? cols[supplierIdx]?.replace(/^"|"$/g, '').trim() : null,
-            categoryId: null
-          });
-          importedCount++;
-        }
-        setMessage({ text: language === 'ar' ? `تم استيراد ${importedCount} منتج.` : `Imported ${importedCount} products.`, type: 'success' });
-        onRefresh();
-      } catch (err) {
-        setMessage({ text: language === 'ar' ? "فشل الاستيراد." : "Import failed.", type: 'error' });
-      } finally {
-        setIsImporting(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // ============================================================================
-  // Derived Data
-  // ============================================================================
-
-  const processedProducts = useMemo(() => {
-    let result = products;
-
-    // 1. Filter Category & Stock Status
-    result = result.filter(p => {
-      const matchesCategory = !filterCategoryId || (filterCategoryId === 'none' ? !p.categoryId : p.categoryId === filterCategoryId);
-      let matchesStockStatus = true;
-      if (filterStockStatus === 'inStock') matchesStockStatus = p.qty > 0;
-      else if (filterStockStatus === 'outOfStock') matchesStockStatus = p.qty === 0;
-      else if (filterStockStatus === 'lowStock') matchesStockStatus = p.qty > 0 && p.qty <= (p.minStock ?? 5);
-      return matchesCategory && matchesStockStatus;
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter(p => {
+      const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode?.includes(searchQuery);
+      const matchCategory = filterCategoryId ? (filterCategoryId === 'none' ? !p.category : p.category === filterCategoryId) : true;
+      let matchStatus = true;
+      if (filterStockStatus === 'inStock') matchStatus = p.qty > (p.minQty || 5);
+      if (filterStockStatus === 'lowStock') matchStatus = p.qty <= (p.minQty || 5) && p.qty > 0;
+      if (filterStockStatus === 'outOfStock') matchStatus = p.qty <= 0;
+      return matchSearch && matchCategory && matchStatus;
     });
 
-    // 2. Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(q) || 
-        (p.barcode && p.barcode.toLowerCase().includes(q)) || 
-        (p.supplier && p.supplier.toLowerCase().includes(q))
-      );
-    }
-
-    // 3. Sort
-    if (sortConfig !== null) {
-      result.sort((a, b) => {
-        let aVal: any = a[sortConfig.key];
-        let bVal: any = b[sortConfig.key];
-        
-        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-        if (aVal === undefined || aVal === null) aVal = '';
-        if (bVal === undefined || bVal === null) bVal = '';
-
-        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
+    if (sortConfig) {
+      filtered.sort((a, b) => {
+        let aVal = a[sortConfig.key] || '';
+        let bVal = b[sortConfig.key] || '';
+        if (typeof aVal === 'string' || typeof bVal === 'string') {
+          return sortConfig.direction === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+        }
+        return sortConfig.direction === 'asc' ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
       });
     }
 
-    return result;
-  }, [products, filterCategoryId, filterStockStatus, searchQuery, sortConfig]);
+    return filtered;
+  }, [products, searchQuery, filterCategoryId, filterStockStatus, sortConfig]);
 
-  // ============================================================================
-  // Render
-  // ============================================================================
+  const openAddModal = () => {
+    setEditingProduct(null);
+    setName(''); setPrice(''); setCostPrice(''); setQty(''); setMinQty('5');
+    setBarcode(''); setCategoryId(''); setSupplier('');
+    setShowAddProductModal(true);
+  };
+
+  const openEditModal = (p: any) => {
+    setEditingProduct(p);
+    setName(p.name || ''); setPrice(p.price || ''); setCostPrice(p.costPrice || ''); 
+    setQty(p.qty || ''); setMinQty(p.minQty || '5'); setBarcode(p.barcode || ''); 
+    setCategoryId(p.category || ''); setSupplier(p.supplier || '');
+    setShowAddProductModal(true);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !price || (!qty && !editingProduct)) return alert("يرجى إدخال الحقول الأساسية");
+    
+    const pData = {
+      name, price: Number(price), costPrice: Number(costPrice) || 0,
+      qty: Number(qty) || 0, minQty: Number(minQty) || 5, barcode,
+      category: categoryId, supplier
+    };
+
+    if (editingProduct) {
+      await api.updateProduct(editingProduct.id, { ...pData, qty: editingProduct.qty });
+    } else {
+      await api.addProduct(pData);
+    }
+    setShowAddProductModal(false);
+    onRefresh();
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+      await api.deleteProduct(id);
+      onRefresh();
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName) return;
+    await api.addCategory(newCategoryName);
+    setNewCategoryName('');
+    onRefresh();
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
+      await api.deleteCategory(id);
+      onRefresh();
+    }
+  };
+
+  const StatCard = ({ icon: Icon, title, value, colorClass }: any) => (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", colorClass)}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div>
+        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{title}</p>
+        <h3 className="text-2xl font-black text-slate-900">{value}</h3>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="p-6 max-w-[1400px] mx-auto animate-fade-in space-y-6" dir="rtl">
       
-      {/* --- FORMS SECTION --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Add Product Form */}
-        <section className="lg:col-span-2 bg-card border border-border-subtle p-8 rounded-xl shadow-sm h-full">
-          <h3 className="section-title text-sm font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-text-secondary">
-            <Plus className="w-4 h-4 text-accent" />
-            {t.addProduct}
-          </h3>
-          <form onSubmit={addProduct} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.productName}</label>
-              <input placeholder={t.productName} className="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-sm focus:border-accent outline-none" value={name || ''} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.category}</label>
-              <select className={cn("w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-sm focus:border-accent outline-none", language === 'ar' && "text-right")} value={categoryId || ''} onChange={e => setCategoryId(e.target.value)}>
-                <option value="">{t.noCategory}</option>
-                {(categories || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.barcode}</label>
-                <input placeholder={t.barcode} className="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-sm focus:border-accent outline-none" value={barcode || ''} onChange={e => setBarcode(e.target.value)} />
-              </div>
-              <div className="space-y-1.5 overflow-visible">
-                <label className="text-[10px] uppercase font-bold text-text-secondary px-1 flex justify-between items-center">
-                  <span>{t.supplier}</span>
-                  <button type="button" onClick={() => setShowQuickSupplierModal(true)} className="text-accent hover:underline text-[9px] font-black">+ {language === 'ar' ? "مورد جديد" : "NEW"}</button>
-                </label>
-                <select className={cn("w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-sm focus:border-accent outline-none", language === 'ar' && "text-right")} value={supplier || ''} onChange={e => setSupplier(e.target.value)}>
-                  <option value="">{language === 'ar' ? "اختر مورد" : "Select Supplier"}</option>
-                  {(suppliers || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className={cn("grid gap-5", permissions.viewCostPrice ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3")}>
-              {permissions.viewCostPrice && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.costPrice}</label>
-                  <input type="number" step="0.01" placeholder={t.costPrice} className="w-full bg-bg-base border border-border-subtle rounded-xl px-4 py-3 text-sm font-medium focus:border-accent outline-none" value={costPrice || ''} onChange={e => setCostPrice(e.target.value)} />
-                </div>
-              )}
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.price}</label>
-                <input type="number" step="0.01" placeholder={t.price} className="w-full bg-bg-base border border-border-subtle rounded-xl px-4 py-3 text-sm font-medium focus:border-accent outline-none" value={price || ''} onChange={e => setPrice(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.qty}</label>
-                <input type="number" placeholder={t.qty} disabled={!permissions.editStock} className="w-full bg-bg-base border border-border-subtle rounded-xl px-4 py-3 text-sm font-medium focus:border-accent outline-none disabled:opacity-50" value={qty || ''} onChange={e => setQty(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{language === 'ar' ? "تنبيه" : "Alert"}</label>
-                <input type="number" placeholder={language === 'ar' ? "تنبيه" : "Alert"} className="w-full bg-bg-base border border-border-subtle rounded-xl px-4 py-3 text-sm font-medium focus:border-accent outline-none" value={minStock || ''} onChange={e => setMinStock(e.target.value)} />
-              </div>
-            </div>
-            <button type="submit" className="md:col-span-2 bg-accent text-white font-bold rounded-lg py-3 hover:opacity-90 transition-opacity text-sm uppercase tracking-widest shadow-md">
-              {t.save}
-            </button>
-          </form>
-        </section>
-
-        {/* Add Category Section */}
-        <section className="bg-card border border-border-subtle p-8 rounded-xl shadow-sm h-full">
-          <h3 className="section-title text-sm font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-text-secondary">
-            <Package className="w-4 h-4 text-accent" />
-            {t.addCategory}
-          </h3>
-          <form onSubmit={addCategory} className="space-y-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold text-text-secondary px-1">{t.categoryName}</label>
-              <input placeholder={t.categoryName} className="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-sm focus:border-accent outline-none" value={newCategoryName || ''} onChange={e => setNewCategoryName(e.target.value)} />
-            </div>
-            <button type="submit" className="w-full bg-white border border-border-subtle text-text-main font-bold rounded-lg py-3 hover:bg-bg-base transition-colors text-sm uppercase tracking-widest">
-              {t.save}
-            </button>
-          </form>
-
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[10px] uppercase font-bold text-text-secondary tracking-widest">{t.categories}</h4>
-              <button onClick={seedDefaults} className="text-[9px] font-black text-accent hover:underline uppercase tracking-widest flex items-center gap-1">
-                <Plus className="w-2.5 h-2.5" />{language === 'ar' ? "إعداد افتراضي" : "SETUP DEFAULTS"}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(categories || []).map(c => (
-                <div key={c.id} className="group/cat flex items-center gap-2 bg-bg-base border border-border-subtle px-3 py-1.5 rounded-xl text-[11px] font-bold text-text-main hover:border-accent/40 transition-colors">
-                  <span>{c.name}</span>
-                  <button onClick={() => deleteCategory(c.id)} className="text-text-secondary hover:text-danger opacity-0 group-hover/cat:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-              {categories.length === 0 && <div className="text-[11px] text-text-secondary italic">{language === 'ar' ? "لا توجد فئات حالياً" : "No categories yet"}</div>}
-            </div>
-          </div>
-        </section>
+      {/* Header & Stats */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+            <Package className="w-7 h-7 text-primary" />
+            المخزون والمنتجات
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">إدارة منتجاتك، وتصنيفاتك، ومتابعة الكميات بكل سهولة</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowCategoryModal(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-border-subtle transition-all font-bold text-sm shadow-sm">
+            <LayoutGrid className="w-4 h-4" /> التصنيفات
+          </button>
+          <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" /> إضافة منتج
+          </button>
+        </div>
       </div>
 
-      {/* --- INVENTORY LIST SECTION --- */}
-      <div className="space-y-6">
-        <div className="flex flex-col xl:flex-row xl:justify-between xl:items-end gap-4">
-          <div className="flex flex-col gap-2">
-            <h3 className="text-xl font-bold tracking-tight text-text-main">{t.inventory}</h3>
-            {/* Search Bar */}
-            <div className="relative w-full xl:w-96">
-              <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary", language === 'ar' ? 'right-3' : 'left-3')} />
-              <input 
-                type="text"
-                placeholder={language === 'ar' ? "بحث باسم، باركود، مورد..." : "Search name, barcode, supplier..."}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className={cn("w-full bg-white dark:bg-slate-900 border border-border-subtle rounded-xl py-2.5 text-sm font-bold focus:border-accent outline-none transition-all shadow-sm", language === 'ar' ? 'pr-10 pl-4' : 'pl-10 pr-4')}
-              />
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Export / Import CSV */}
-            <div className="flex bg-card border border-border-subtle rounded-lg overflow-hidden shadow-sm">
-               <button onClick={exportToCSV} className="px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-text-secondary hover:text-text-main hover:bg-bg-base transition-colors border-r border-border-subtle">
-                 <Download className="w-3.5 h-3.5 text-emerald-500" /> {language === 'ar' ? "تصدير" : "Export"}
-               </button>
-               <label className={cn("px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-text-secondary hover:text-text-main hover:bg-bg-base transition-colors cursor-pointer", isImporting && "opacity-50 pointer-events-none")}>
-                 <Upload className="w-3.5 h-3.5 text-accent" /> {isImporting ? "..." : (language === 'ar' ? "استيراد" : "Import")}
-                 <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleImportCSV} />
-               </label>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={Boxes} title="إجمالي المنتجات" value={totalProducts} colorClass="bg-blue-500/10 text-blue-500" />
+        <StatCard icon={DollarSign} title="قيمة المخزون" value={formatNumber(totalValue) + " درهم"} colorClass="bg-green-500/10 text-green-500" />
+        <StatCard icon={AlertTriangle} title="منتجات قاربت على النفاذ" value={lowStockCount} colorClass="bg-amber-500/10 text-amber-500" />
+        <StatCard icon={X} title="منتجات نفدت" value={outOfStockCount} colorClass="bg-red-500/10 text-red-500" />
+      </div>
 
-            <button onClick={() => setShowGrouped(!showGrouped)} className={cn("px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-2", showGrouped ? "bg-accent text-white border-accent" : "bg-card text-text-secondary border-border-subtle hover:bg-bg-base")}>
-              <LayoutGrid className="w-3.5 h-3.5" />
-              {language === 'ar' ? "عرض حسب الفئة" : "Show By Category"}
-            </button>
-            <div className="flex items-center gap-2">
-              <select className={cn("bg-card border border-border-subtle rounded-lg px-4 py-2.5 text-xs focus:border-accent outline-none font-bold shadow-sm", language === 'ar' && "text-right")} value={filterCategoryId} onChange={e => setFilterCategoryId(e.target.value)}>
-                <option value="">{t.allCategories}</option>
-                <option value="none">{t.noCategory}</option>
-                {(categories || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <select className={cn("bg-card border border-border-subtle rounded-lg px-4 py-2.5 text-xs focus:border-accent outline-none font-bold shadow-sm", language === 'ar' && "text-right")} value={filterStockStatus} onChange={e => setFilterStockStatus(e.target.value as any)}>
-                <option value="all">{language === 'ar' ? "كل الحالات" : "All Status"}</option>
-                <option value="inStock">{t.inStock}</option>
-                <option value="lowStock">{t.lowStock}</option>
-                <option value="outOfStock">{t.outOfStock}</option>
-              </select>
-            </div>
-          </div>
+      {/* Filters and Search */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
+        <div className="relative w-full md:max-w-md">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+          <input 
+            type="text" 
+            placeholder="بحث باسم المنتج أو الباركود..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-primary outline-none font-medium"
+          />
         </div>
+        
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <select 
+            value={filterCategoryId}
+            onChange={(e) => setFilterCategoryId(e.target.value)}
+            className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
+          >
+            <option value="">كل التصنيفات</option>
+            <option value="none">بدون تصنيف</option>
+            {categories.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          
+          <select 
+            value={filterStockStatus}
+            onChange={(e) => setFilterStockStatus(e.target.value as any)}
+            className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
+          >
+            <option value="all">كل الحالات</option>
+            <option value="inStock">متوفر</option>
+            <option value="lowStock">قارب على النفاذ</option>
+            <option value="outOfStock">نفد</option>
+          </select>
+        </div>
+      </div>
 
-        {showGrouped ? (
-          /* GROUPED VIEW */
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {(categories || []).map(c => {
-               const catProducts = processedProducts.filter(p => p.categoryId === c.id);
-               if (catProducts.length === 0) return null;
-               return (
-                 <div key={c.id} className="bg-card border border-border-subtle rounded-xl p-6 shadow-sm hover:border-accent/30 transition-colors">
-                    <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-accent mb-4 border-b border-border-subtle pb-3">
-                      <FolderOpen className="w-4 h-4" />{c.name}
-                      <span className="ml-auto bg-accent/10 text-accent px-2 py-0.5 rounded-md text-[10px]">{catProducts.length}</span>
-                    </h4>
-                      <div className="space-y-3">
-                        {catProducts.map(p => (
-                          <div key={p.id} className="flex justify-between items-center group">
-                            <div className={cn(language === 'ar' && "text-right")}>
-                              <div className="text-[13px] font-semibold text-text-main group-hover:text-accent transition-colors">{p.name}</div>
-                              <div className="text-[10px] text-text-secondary font-mono">#{p.id.slice(0, 6).toUpperCase()} {p.supplier && <span className="ml-2 font-bold opacity-60 text-accent">/ {p.supplier}</span>}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                               <div className="text-right">
-                                 <div className="text-[12px] font-bold text-text-main">{formatNumber(p.price)} {t.currency}</div>
-                                 <div className={cn("text-[10px] font-black uppercase", p.qty <= (p.minStock ?? 5) ? "text-danger" : "text-text-secondary")}>{language === 'ar' ? "الكمية" : "Qty"}: {p.qty}</div>
-                               </div>
-                               {permissions.editStock && <button onClick={() => startEditing(p)} className="p-1.5 text-accent hover:bg-accent/10 rounded-md transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
-                             </div>
-                          </div>
-                        ))}
-                      </div>
-                 </div>
-               );
-            })}
-            {/* Uncategorized */}
-            {(() => {
-                const uncategorizedProducts = processedProducts.filter(p => !p.categoryId);
-                if (uncategorizedProducts.length === 0) return null;
-                return (
-                  <div className="bg-card border border-border-subtle rounded-xl p-6 shadow-sm">
-                      <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-text-secondary mb-4 border-b border-border-subtle pb-3">
-                        <Archive className="w-4 h-4" />{t.noCategory}
-                        <span className="ml-auto bg-bg-base text-text-secondary px-2 py-0.5 rounded-md text-[10px]">{uncategorizedProducts.length}</span>
-                      </h4>
-                      <div className="space-y-3">
-                        {uncategorizedProducts.map(p => (
-                          <div key={p.id} className="flex justify-between items-center group">
-                            <div className={cn(language === 'ar' && "text-right")}>
-                              <div className="text-[13px] font-semibold text-text-main group-hover:text-accent transition-colors">{p.name}</div>
-                              <div className="text-[10px] text-text-secondary font-mono">#{p.id.slice(0, 6).toUpperCase()} {p.supplier && <span className="ml-2 font-bold opacity-60 text-accent">/ {p.supplier}</span>}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-right">
-                                <div className="text-[12px] font-bold text-text-main">{formatNumber(p.price)} {t.currency}</div>
-                                <div className={cn("text-[10px] font-black uppercase", p.qty <= (p.minStock ?? 5) ? "text-danger" : "text-text-secondary")}>{language === 'ar' ? "الكمية" : "Qty"}: {p.qty}</div>
-                              </div>
-                              {permissions.editStock && <button onClick={() => startEditing(p)} className="p-1.5 text-accent hover:bg-accent/10 rounded-md transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                  </div>
-                );
-            })()}
-          </div>
-        ) : (
-          /* TABLE VIEW */
-          <div className="section-container bg-card border border-border-subtle rounded-xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-[#fafafa] dark:bg-slate-800/50 border-b border-border-subtle">
-                    <th onClick={() => handleSort('name')} className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest cursor-pointer hover:bg-bg-base transition-colors select-none">
-                      {language === 'ar' ? 'المنتج' : 'Product'} {getSortIcon('name')}
-                    </th>
-                    {permissions.viewCostPrice && (
-                      <th onClick={() => handleSort('costPrice')} className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest cursor-pointer hover:bg-bg-base transition-colors select-none">
-                        {t.costPrice} {getSortIcon('costPrice')}
-                      </th>
-                    )}
-                    <th onClick={() => handleSort('price')} className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest cursor-pointer hover:bg-bg-base transition-colors select-none">
-                      {t.price} {getSortIcon('price')}
-                    </th>
-                    <th onClick={() => handleSort('qty')} className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest cursor-pointer hover:bg-bg-base transition-colors select-none">
-                      {t.inventory} {getSortIcon('qty')}
-                    </th>
-                    <th onClick={() => handleSort('supplier')} className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest cursor-pointer hover:bg-bg-base transition-colors select-none">
-                      {t.supplier} {getSortIcon('supplier')}
-                    </th>
-                    <th className="p-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest text-right">{t.actions}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-12 text-center text-text-secondary">
-                        <Package className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <p className="font-bold text-sm">{language === 'ar' ? "لا يوجد منتجات" : "No products found"}</p>
+      {/* Products Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-right">
+            <thead className="bg-slate-50/50 border-b border-slate-200">
+              <tr>
+                <th onClick={() => handleSort('name')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
+                  <div className="flex items-center gap-2">المنتج {sortConfig?.key === 'name' && <ArrowUpDown className="w-3 h-3" />}</div>
+                </th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">التصنيف / المورد</th>
+                <th onClick={() => handleSort('qty')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
+                  <div className="flex items-center gap-2">الكمية {sortConfig?.key === 'qty' && <ArrowUpDown className="w-3 h-3" />}</div>
+                </th>
+                {true && (
+                  <th onClick={() => handleSort('costPrice')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
+                    <div className="flex items-center gap-2">ثمن الشراء {sortConfig?.key === 'costPrice' && <ArrowUpDown className="w-3 h-3" />}</div>
+                  </th>
+                )}
+                <th onClick={() => handleSort('price')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
+                  <div className="flex items-center gap-2">ثمن البيع {sortConfig?.key === 'price' && <ArrowUpDown className="w-3 h-3" />}</div>
+                </th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-subtle">
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <Archive className="w-12 h-12 opacity-20" />
+                      <p className="font-bold text-lg">لا توجد منتجات</p>
+                      <p className="text-sm">لم يتم العثور على أي منتج يطابق بحثك.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map((p: any) => {
+                  const cat = categories.find((c:any) => c.id === p.category);
+                  const isLow = p.qty <= (p.minQty || 5) && p.qty > 0;
+                  const isOut = p.qty <= 0;
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900">{p.name}</span>
+                          {p.barcode && <span className="text-[10px] text-slate-500 font-mono tracking-wider">{p.barcode}</span>}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 border border-slate-200 text-slate-500 w-fit">
+                            {cat ? cat.name : 'بدون تصنيف'}
+                          </span>
+                          {p.supplier && <span className="text-[10px] text-primary/80 font-medium">{p.supplier}</span>}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "inline-flex items-center justify-center min-w-[2.5rem] h-6 rounded-lg text-xs font-black shadow-sm border",
+                            isOut ? "bg-red-500/10 text-red-500 border-red-500/20" : 
+                            isLow ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : 
+                            "bg-green-500/10 text-green-500 border-green-500/20"
+                          )}>
+                            {p.qty}
+                          </span>
+                        </div>
+                      </td>
+                      {true && (
+                        <td className="p-4 font-bold text-slate-500 text-sm">{formatNumber(p.costPrice)} درهم</td>
+                      )}
+                      <td className="p-4 font-black text-slate-900 text-sm">{formatNumber(p.price)} درهم</td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => setAdjustModal(p)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
+                            <ArrowUpDown className="w-4 h-4" />
+                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">تعديل المخزون</span>
+                          </button>
+                          <button onClick={() => openEditModal(p)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeleteProduct(p.id)} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ) : processedProducts.map(p => {
-                    const category = categories.find(c => c.id === p.categoryId);
-                    return (
-                      <tr key={p.id} className={cn(
-                        "border-b border-border-subtle last:border-0 transition-colors group text-[13px]",
-                        p.qty === 0 ? "bg-red-50/30 hover:bg-red-50/50 dark:bg-red-900/10 dark:hover:bg-red-900/20" : 
-                        p.qty <= (p.minStock ?? 5) ? "bg-orange-50/30 hover:bg-orange-50/50 dark:bg-orange-900/10 dark:hover:bg-orange-900/20" : 
-                        "hover:bg-bg-base/30"
-                      )}>
-                        <td className="p-4">
-                          <div className="font-semibold text-text-main">{p.name}</div>
-                          <div className="text-[10px] text-text-secondary font-mono flex items-center gap-2 mt-1">
-                            {p.barcode ? <span>{p.barcode}</span> : <span>#{p.id.slice(0, 8).toUpperCase()}</span>}
-                            {category && <span className="opacity-70 text-accent font-bold bg-accent/10 px-1.5 py-0.5 rounded">• {category.name}</span>}
-                          </div>
-                        </td>
-                        {permissions.viewCostPrice && <td className="p-4 text-text-secondary italic">{formatNumber(p.costPrice || 0)} {t.currency}</td>}
-                        <td className="p-4 text-text-main font-bold">{formatNumber(p.price)} {t.currency}</td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            {permissions.editStock ? (
-                              <>
-                                <button onClick={() => updateStock(p.id, p.qty - 1)} className="w-6 h-6 border border-border-subtle rounded-md flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 transition-colors text-text-secondary shadow-sm">-</button>
-                                <span className={cn("font-black w-10 text-center text-sm", p.qty <= (p.minStock ?? 5) ? "text-danger" : "text-text-main")}>{p.qty}</span>
-                                <button onClick={() => updateStock(p.id, p.qty + 1)} className="w-6 h-6 border border-border-subtle rounded-md flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 transition-colors text-text-secondary shadow-sm">+</button>
-                                <button 
-                                  onClick={() => {
-                                    setAdjProduct(p); setAdjCostPrice(p.costPrice?.toString() || '0'); setAdjSupplierId(p.supplierId || '');
-                                    setShowAdjModal(true);
-                                  }}
-                                  className="ml-2 w-7 h-7 bg-accent/10 rounded-md flex items-center justify-center hover:bg-accent text-accent hover:text-white transition-all shadow-sm"
-                                  title={t.stockAdjustment}
-                                >
-                                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className={cn("font-bold text-sm", p.qty <= (p.minStock ?? 5) ? "text-danger" : "text-text-main")}>{p.qty}</span>
-                            )}
-                            {p.qty <= (p.minStock ?? 5) && (
-                              <span className={cn("text-[9px] ml-2 font-black px-2 py-0.5 rounded-full uppercase tracking-tighter border", p.qty === 0 ? "bg-red-100 text-danger border-red-200 dark:bg-red-900/30" : "bg-orange-100 text-orange-600 border-orange-200 dark:bg-orange-900/30")}>
-                                {p.qty === 0 ? (language === 'ar' ? 'نفذت' : 'Out') : (language === 'ar' ? 'منخفض' : 'Low')}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4 text-[11px] font-bold text-text-secondary">{p.supplier || '-'}</td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => startEditing(p)} className="text-accent hover:bg-accent/10 p-2 rounded-lg transition-colors" title={language === 'ar' ? 'تعديل' : 'Edit'}><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={async () => {
-                              if (window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف المنتج؟' : 'Remove product from inventory?')) {
-                                try { await api.deleteProduct(p.id); setMessage({ text: language === 'ar' ? "تم الحذف." : "Product removed.", type: 'success' }); onRefresh(); } 
-                                catch (err) { setMessage({ text: language === 'ar' ? "فشل الحذف." : "Delete failed.", type: 'error' }); }
-                              }
-                            }} className="text-text-secondary hover:bg-danger/10 hover:text-danger p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* --- MODALS --- */}
+      {/* Add / Edit Product Modal */}
       <AnimatePresence>
-        {/* Adjustment Modal */}
-        {showAdjModal && adjProduct && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="bg-card border border-border-subtle rounded-3xl p-8 w-full max-w-md shadow-2xl">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-black text-text-main tracking-tight">{t.stockAdjustment}</h3>
-                <button onClick={() => setShowAdjModal(false)} className="p-2 hover:bg-bg-base rounded-full transition-colors"><X className="w-5 h-5 text-text-secondary" /></button>
-              </div>
-              <div className="mb-6 p-4 bg-bg-base/50 rounded-2xl border border-border-subtle">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{language === 'ar' ? 'المنتج' : 'Product'}</div>
-                <div className="font-bold text-text-main">{adjProduct.name}</div>
-                <div className="text-xs text-text-secondary mt-1">{language === 'ar' ? 'الرصيد الحالي:' : 'Current Stock:'} <span className="font-black text-text-main">{adjProduct.qty}</span></div>
-              </div>
-
-              <form onSubmit={handleStockAdjust} className="space-y-6">
-                <div className="grid grid-cols-2 gap-2 bg-bg-base p-1.5 rounded-2xl border border-border-subtle shadow-inner">
-                  <button type="button" onClick={() => setAdjType('in')} className={cn("py-2.5 px-4 rounded-xl font-black transition-all text-[11px] uppercase tracking-widest", adjType === 'in' ? "bg-accent text-white shadow-md" : "text-text-secondary hover:text-text-main")}>{t.stockIn}</button>
-                  <button type="button" onClick={() => setAdjType('out')} className={cn("py-2.5 px-4 rounded-xl font-black transition-all text-[11px] uppercase tracking-widest", adjType === 'out' ? "bg-danger text-white shadow-md" : "text-text-secondary hover:text-text-main")}>{t.stockOut}</button>
-                </div>
-
-                {adjType === 'out' && (
-                  <div className="grid grid-cols-2 gap-3 mb-2">
-                    <button type="button" onClick={() => setAdjOutReason('damage')} className={cn("py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-2", adjOutReason === 'damage' ? "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900/20 dark:border-orange-800" : "bg-bg-base border-border-subtle text-text-secondary hover:border-text-secondary/30")}>
-                      <AlertTriangle className="w-4 h-4" />
-                      {language === 'ar' ? 'تالف / ضياع' : 'Damage / Loss'}
-                    </button>
-                    <button type="button" onClick={() => setAdjOutReason('return')} className={cn("py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-2", adjOutReason === 'return' ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800" : "bg-bg-base border-border-subtle text-text-secondary hover:border-text-secondary/30")}>
-                      <ArrowRightLeft className="w-4 h-4" />
-                      {language === 'ar' ? 'إرجاع للمورد' : 'Return to Supplier'}
-                    </button>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest px-1">{t.qty}</label>
-                  <input required type="number" min="1" step="any" className="w-full bg-white dark:bg-slate-900 border border-border-subtle rounded-xl py-3 px-4 text-text-main font-black focus:border-accent outline-none shadow-sm" value={adjQty} onChange={(e) => setAdjQty(e.target.value)} />
-                </div>
-
-                {/* Show supplier select if IN, OR if OUT + RETURN */}
-                {(adjType === 'in' || (adjType === 'out' && adjOutReason === 'return')) && (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest px-1">{t.supplier}</label>
-                      <select required={adjType === 'out' && adjOutReason === 'return'} className="w-full bg-white dark:bg-slate-900 border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold focus:border-accent outline-none shadow-sm" value={adjSupplierId} onChange={(e) => setAdjSupplierId(e.target.value)}>
-                        <option value="">{language === 'ar' ? "اختر المورد..." : "Select Supplier..."}</option>
-                        {(suppliers || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                    </div>
-                    {adjSupplierId && (
-                      <div className="space-y-2 p-4 bg-accent/5 rounded-xl border border-accent/20">
-                        <label className="text-[10px] font-black text-accent uppercase tracking-widest">{language === 'ar' ? "تكلفة الوحدة" : "Unit Cost"}</label>
-                        <input required type="number" step="any" className="w-full bg-white dark:bg-slate-900 border border-border-subtle rounded-xl py-2.5 px-4 text-text-main font-black focus:border-accent outline-none shadow-sm" value={adjCostPrice} onChange={(e) => setAdjCostPrice(e.target.value)} />
-                        <p className="text-[9px] text-text-secondary font-bold mt-2">
-                          {adjType === 'in' 
-                            ? (language === 'ar' ? "سيتم زيادة التكلفة في دين المورد" : "Cost will increase supplier debt")
-                            : (language === 'ar' ? "سيتم خصم التكلفة من دين المورد" : "Cost will be deducted from supplier debt")}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest px-1">{t.reason} {adjType === 'out' && adjOutReason === 'damage' && "*"}</label>
-                  <input required={adjType === 'out' && adjOutReason === 'damage'} type="text" placeholder={language === 'ar' ? "السبب الملاحظة..." : "Reason / Note..."} className="w-full bg-white dark:bg-slate-900 border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold focus:border-accent outline-none shadow-sm" value={adjReason} onChange={(e) => setAdjReason(e.target.value)} />
-                </div>
-
-                <button type="submit" className={cn("w-full py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl transition-all text-white uppercase tracking-widest text-sm", adjType === 'in' ? "bg-accent hover:opacity-90 shadow-accent/20" : "bg-danger hover:opacity-90 shadow-danger/20")}>
-                  <Save className="w-4 h-4" /> {t.confirm}
+        {showAddProductModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddProductModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
+              <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <Package className="w-6 h-6 text-primary" />
+                  {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
+                </h3>
+                <button onClick={() => setShowAddProductModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                  <X className="w-5 h-5" />
                 </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Edit Modal */}
-        {editingProduct && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border-subtle rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-black text-text-main tracking-tight">{language === 'ar' ? "تعديل المنتج" : "Edit Product"}</h3>
-                <button onClick={() => setEditingProduct(null)} className="p-2 hover:bg-bg-base rounded-full transition-colors"><X className="w-5 h-5 text-text-secondary" /></button>
               </div>
-              <form onSubmit={handleUpdateProduct} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.productName}</label>
-                    <input required className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.name || ''} onChange={e => setEditForm({...editForm, name: e.target.value})} />
+              <form onSubmit={handleSaveProduct} className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">اسم المنتج *</label>
+                    <input autoFocus required type="text" placeholder="مثال: حليب ممتاز" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.price}</label>
-                    <input required type="number" step="0.01" className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.price || ''} onChange={e => setEditForm({...editForm, price: e.target.value})} />
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">الباركود</label>
+                    <input type="text" placeholder="123456789..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" value={barcode} onChange={e => setBarcode(e.target.value)} />
                   </div>
-                  {permissions.viewCostPrice && (
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.costPrice}</label>
-                      <input type="number" step="0.01" className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.costPrice || ''} onChange={e => setEditForm({...editForm, costPrice: e.target.value})} />
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">التصنيف</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer font-bold" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                      <option value="">بدون تصنيف</option>
+                      {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ثمن الشراء</label>
+                    <div className="relative">
+                      <input type="number" step="0.01" min="0" placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-black">درهم</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ثمن البيع *</label>
+                    <div className="relative">
+                      <input required type="number" step="0.01" min="0" placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-black text-primary" value={price} onChange={e => setPrice(e.target.value)} />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xs font-black">درهم</span>
+                    </div>
+                  </div>
+
+                  {!editingProduct && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">الكمية الأولية *</label>
+                      <input required type="number" min="0" placeholder="0" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-black" value={qty} onChange={e => setQty(e.target.value)} />
                     </div>
                   )}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.inventory}</label>
-                    <input required type="number" disabled={!permissions.editStock} className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent disabled:opacity-50" value={editForm.qty || ''} onChange={e => setEditForm({...editForm, qty: e.target.value})} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.minStock}</label>
-                    <input type="number" className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.minStock || ''} onChange={e => setEditForm({...editForm, minStock: e.target.value})} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.barcode}</label>
-                    <input className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.barcode || ''} onChange={e => setEditForm({...editForm, barcode: e.target.value})} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.category}</label>
-                    <select className="w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent" value={editForm.categoryId || ''} onChange={e => setEditForm({...editForm, categoryId: e.target.value})}>
-                      <option value="">{t.noCategory}</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-1">{t.supplier}</label>
-                    <select className={cn("w-full bg-bg-base border border-border-subtle rounded-xl py-3 px-4 text-text-main font-bold outline-none focus:border-accent", language === 'ar' && "text-right")} value={editForm.supplier || ''} onChange={e => setEditForm({...editForm, supplier: e.target.value})}>
-                      <option value="">{language === 'ar' ? "اختر مورد" : "Select Supplier"}</option>
-                      {(suppliers || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">المورد</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer font-bold" value={supplier} onChange={e => setSupplier(e.target.value)}>
+                      <option value="">اختيار مورد...</option>
+                      {suppliers.map((s:any) => <option key={s.id} value={s.name}>{s.name}</option>)}
                     </select>
                   </div>
                 </div>
-                <button type="submit" className="w-full py-4 bg-accent text-white rounded-2xl font-black shadow-xl shadow-accent/20 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm mt-4">
-                  {t.saveChanges}
-                </button>
+
+                <div className="mt-8 flex gap-3">
+                  <button type="button" onClick={() => setShowAddProductModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">إلغاء</button>
+                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ المنتج</button>
+                </div>
               </form>
             </motion.div>
           </div>
         )}
 
-        {/* Quick Supplier Modal */}
-        {showQuickSupplierModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card w-full max-w-md rounded-3xl p-8 border border-border-subtle shadow-2xl">
-              <h4 className="text-xl font-black mb-6 flex items-center gap-2"><Store className="w-5 h-5 text-accent" />{t.addSupplier}</h4>
-              <form onSubmit={addQuickSupplier} className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-text-secondary mb-2 block">{t.supplierName}</label>
-                  <input autoFocus required value={quickSupplierName} onChange={e => setQuickSupplierName(e.target.value)} placeholder="e.g. Acme Corp" className="w-full bg-bg-base border border-border-subtle rounded-xl py-4 px-6 text-sm font-bold focus:border-accent outline-none shadow-inner" />
+        {/* Categories Modal */}
+        {showCategoryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCategoryModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
+              <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <LayoutGrid className="w-6 h-6 text-primary" />
+                  إدارة التصنيفات
+                </h3>
+                <button onClick={() => setShowCategoryModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                <form onSubmit={handleAddCategory} className="flex gap-2 mb-6">
+                  <input required type="text" placeholder="اسم التصنيف الجديد..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none font-medium" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                  <button type="submit" className="px-5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-md shadow-primary/20 transition-all flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> إضافة
+                  </button>
+                </form>
+                
+                <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {categories.length === 0 ? (
+                    <p className="text-center text-slate-500 py-4 text-sm font-bold">لا توجد تصنيفات بعد.</p>
+                  ) : categories.map((c: any) => (
+                    <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary/30 transition-colors">
+                      <span className="font-bold text-slate-900">{c.name}</span>
+                      <button onClick={() => handleDeleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex gap-4">
-                  <button type="button" onClick={() => setShowQuickSupplierModal(false)} className="flex-1 bg-white border border-border-subtle text-text-secondary py-4 rounded-2xl font-black text-xs tracking-widest active:scale-95 transition-all uppercase">{t.cancel}</button>
-                  <button type="submit" className="flex-1 bg-accent text-white py-4 rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-accent/20 active:scale-95 transition-all uppercase">{t.save}</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Stock Adjustment Modal */}
+        {adjustModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setAdjustModal(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
+              <div className="p-6 border-b border-slate-200 bg-slate-50/30">
+                <h3 className="text-xl font-black text-slate-900">تعديل المخزون</h3>
+                <p className="text-sm text-slate-500 mt-1 font-medium">{adjustModal.name}</p>
+              </div>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const qty = Number(formData.get('qty'));
+                const type = formData.get('type');
+                if (qty > 0) {
+                  await api.adjustStock(adjustModal.id, { type, quantity: qty });
+                  onRefresh();
+                  setAdjustModal(null);
+                }
+              }} className="p-6 space-y-5">
+                <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
+                  <label className="flex-1 cursor-pointer">
+                    <input type="radio" name="type" value="in" defaultChecked className="peer sr-only" />
+                    <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-green-500 peer-checked:text-white transition-all peer-checked:shadow-md">
+                      إضافة كمية
+                    </div>
+                  </label>
+                  <label className="flex-1 cursor-pointer">
+                    <input type="radio" name="type" value="out" className="peer sr-only" />
+                    <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-red-500 peer-checked:text-white transition-all peer-checked:shadow-md">
+                      سحب كمية
+                    </div>
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">الكمية</label>
+                  <input name="qty" required type="number" min="1" placeholder="مثال: 10" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xl font-black text-center focus:border-primary outline-none transition-all" />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setAdjustModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">إلغاء</button>
+                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">تأكيد</button>
                 </div>
               </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }

@@ -59,6 +59,11 @@ autoUpdater.on('update-available', (info) => {
   mainWindow.webContents.send('update_available');
 });
 
+autoUpdater.on('update-not-available', (info) => {
+  log.info('Update not available.');
+  mainWindow.webContents.send('update_not_available');
+});
+
 autoUpdater.on('update-downloaded', (info) => {
   log.info('Update downloaded');
   mainWindow.webContents.send('update_downloaded');
@@ -78,4 +83,10 @@ autoUpdater.on('update-downloaded', (info) => {
 
 autoUpdater.on('error', (err) => {
   log.error('Error in auto-updater. ' + err);
+  mainWindow.webContents.send('update_error', err == null ? "Error" : err.toString());
+});
+
+ipcMain.on('check_for_updates', () => {
+  log.info('Manual update check requested');
+  autoUpdater.checkForUpdatesAndNotify();
 });
