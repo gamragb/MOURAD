@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -1548,7 +1548,7 @@ export function POSView({
                 >
                   <option value="">
                     {isRtl
-                      ? "-- حساب زبون مكرر (اختياري) --"
+                      ? "-- اختيار زبون (اختياري) --"
                       : "-- Choose Customer (Optional) --"}
                   </option>
                   {appData.clients.map((client) => (
@@ -1572,11 +1572,6 @@ export function POSView({
             <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 flex bg-slate-100/50 p-1 shadow-inner flex-wrap">
               {[
                 { id: "cash", icon: Banknote, label: isRtl ? "نقداً" : "Cash" },
-                {
-                  id: "card",
-                  icon: CreditCard,
-                  label: isRtl ? "بطاقة" : "Card",
-                },
                 {
                   id: "credit",
                   icon: UserPlus,
@@ -1636,7 +1631,7 @@ export function POSView({
                     />
                     <span>
                       {isRtl
-                        ? `سيتم تسجيل مبلغ +${finalTotal.toFixed(2)} DH ديونً على حساب الزبون ( ${selectedClientObj.name} )`
+                        ? `سيتم تسجيل مبلغ +${finalTotal.toFixed(2)} DH ديناً على حساب الزبون ( ${selectedClientObj.name} )`
                         : `Will record +${finalTotal.toFixed(2)} DH credit debt on account for (${selectedClientObj.name})`}
                     </span>
                   </div>
