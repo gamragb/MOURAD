@@ -559,6 +559,9 @@ export default function App() {
       onLogout={handleFirebaseLogout}
       setSyncStatus={setSyncStatus}
       currentUser={currentUser}
+      updateInfo={updateInfo}
+      updateReady={updateReady}
+      setUpdateInfo={setUpdateInfo}
     />
   );
 }
@@ -587,6 +590,9 @@ function MainLayout({
   onLogout,
   setSyncStatus,
   currentUser,
+  updateInfo,
+  updateReady,
+  setUpdateInfo,
 }: {
   appData: AppData;
   setAppData: any;
@@ -606,6 +612,9 @@ function MainLayout({
   onLogout: () => void;
   setSyncStatus: any;
   currentUser?: any;
+  updateInfo: any;
+  updateReady: boolean;
+  setUpdateInfo: any;
 }) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isIframe, setIsIframe] = useState(false);
@@ -1010,12 +1019,23 @@ function MainLayout({
               </div>
             </div>
             
-            {updateInfo.releaseNotes && (
+            {updateInfo.releaseNotes && (() => {
+              const notes = updateInfo.releaseNotes;
+              return (
               <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100 max-h-[30vh] overflow-y-auto custom-scrollbar">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{isRtl ? "ما الجديد؟" : "What's new?"}</h4>
-                <div className="text-sm font-medium text-slate-700 prose prose-sm prose-slate" dangerouslySetInnerHTML={{ __html: updateInfo.releaseNotes }} />
+                <div className="text-sm font-medium text-slate-700 prose prose-sm prose-slate">
+                  {typeof notes === 'string' ? (
+                    <div dangerouslySetInnerHTML={{ __html: notes }} />
+                  ) : Array.isArray(notes) ? (
+                    notes.map((note: any, i: number) => (
+                      <div key={i} dangerouslySetInnerHTML={{ __html: note.note || '' }} />
+                    ))
+                  ) : null}
+                </div>
               </div>
-            )}
+              );
+            })()}
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setUpdateInfo(null)} className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors">
