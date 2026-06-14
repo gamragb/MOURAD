@@ -16,7 +16,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
   const suppliers = appData.suppliers || [];
   const api = {
     addCategory: async (name: string) => { 
-      setAppData((prev: AppData) => ({ ...prev, categories: [...(prev.categories || []), { id: Date.now().toString(), name }] }));
+      setAppData((prev: AppData) => ({ ...prev, categories: [...(prev.categories || []), { id: Date.now().toString() + Math.random().toString(36).slice(2, 6), name }] }));
     },
     deleteCategory: async (id: string) => { 
       setAppData((prev: AppData) => ({ ...prev, categories: (prev.categories || []).filter((c: any) => c.id !== id) }));
@@ -156,6 +156,18 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
       await api.deleteCategory(id);
     }
   };
+  const handleSetupDefaults = async () => {
+    const defaults = ["ALTERNATEUR", "POMPE IMMERGEE", "ACCESSORIES POMPE IMMERGEE", "BALLON", "Peinture (الصباغة)", "Visserie (الفيس و البراغي)", "Outillage (الأدوات)", "Électricité (الكهرباء)", "Plomberie (الترصيص / الما)", "Matériaux (مواد البناء)", "Quincaillerie (خردوات متنوعة)", "PVC", "ELCTRO POMPE"];
+    setAppData((prev: AppData) => {
+      const existingCats = prev.categories || [];
+      const newCats = defaults.filter(name => !existingCats.find((c:any) => c.name === name)).map((name, i) => ({
+        id: Date.now().toString() + i + Math.random().toString(36).slice(2, 6),
+        name
+      }));
+      return { ...prev, categories: [...existingCats, ...newCats] };
+    });
+  };
+
 
   const StatCard = ({ icon: Icon, title, value, colorClass }: any) => (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
@@ -419,36 +431,51 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
         {showCategoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCategoryModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
-                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <LayoutGrid className="w-6 h-6 text-primary" />
-                  إدارة التصنيفات
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl overflow-hidden" dir="ltr">
+              <div className="p-8">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-8">
+                  <Package className="w-5 h-5 text-indigo-600" />
+                  AJOUTER UNE CATÉGORIE
                 </h3>
-                <button onClick={() => setShowCategoryModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                
+                <form onSubmit={handleAddCategory} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOM DE LA CATÉGORIE</label>
+                    <input autoFocus required type="text" placeholder="Nom de la Catégorie" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                  </div>
+                  
+                  <div className="pt-2">
+                    <button type="submit" className="w-full py-4 bg-white border border-slate-200 text-slate-900 rounded-xl font-black uppercase tracking-widest hover:border-indigo-500 transition-all shadow-sm">
+                      ENREGISTRER
+                    </button>
+                  </div>
+                </form>
+
+                <div className="mt-12">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CATÉGORIES</h4>
+                    <button type="button" onClick={handleSetupDefaults} className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:text-indigo-800 transition-colors">
+                      <Plus className="w-3 h-3" /> SETUP DEFAULTS
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2 pb-2">
+                    {categories.length === 0 ? (
+                      <p className="text-slate-400 text-sm font-medium w-full text-center py-4">No categories added yet.</p>
+                    ) : categories.map((c: any) => (
+                      <div key={c.id} className="group relative flex items-center justify-center px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl hover:border-indigo-500 transition-all cursor-default select-none">
+                        <span className="text-xs font-black text-slate-900">{c.name}</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.id); }} className="absolute -top-2 -right-2 p-1 bg-white border border-slate-200 text-red-500 hover:bg-red-50 hover:border-red-200 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <button onClick={() => setShowCategoryModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all">
                   <X className="w-5 h-5" />
                 </button>
-              </div>
-              <div className="p-6">
-                <form onSubmit={handleAddCategory} className="flex gap-2 mb-6">
-                  <input required type="text" placeholder="اسم التصنيف الجديد..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none font-medium" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
-                  <button type="submit" className="px-5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> إضافة
-                  </button>
-                </form>
-                
-                <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                  {categories.length === 0 ? (
-                    <p className="text-center text-slate-500 py-4 text-sm font-bold">لا توجد تصنيفات بعد.</p>
-                  ) : categories.map((c: any) => (
-                    <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary/30 transition-colors">
-                      <span className="font-bold text-slate-900">{c.name}</span>
-                      <button onClick={() => handleDeleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
               </div>
             </motion.div>
           </div>

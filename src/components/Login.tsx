@@ -215,7 +215,7 @@ export function Login({
         <div className="mt-10 flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 tracking-[0.2em] uppercase">
           <ShieldCheck size={14} className="text-emerald-500 animate-pulse" />
           <span>
-            {isRtl ? "حماية تامة • معالجة محلية آمنة" : "Secure Local Instance"} • v0.3.2
+            {isRtl ? "حماية تامة • معالجة محلية آمنة" : "Secure Local Instance"} • v0.4.0
           </span>
         </div>
       </motion.div>
