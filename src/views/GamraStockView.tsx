@@ -14,15 +14,34 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
   const products = appData.products || [];
   const categories = appData.categories || [];
   const suppliers = appData.suppliers || [];
-  const onRefresh = () => setAppData(storage.getData());
-
   const api = {
-    addCategory: async (name: string) => { const data = storage.getData(); data.categories.push({ id: Date.now().toString(), name }); storage.saveData(data); },
-    deleteCategory: async (id: string) => { const data = storage.getData(); data.categories = data.categories.filter((c: any) => c.id !== id); storage.saveData(data); },
-    addProduct: async (p: any) => { const data = storage.getData(); data.products.push({ ...p, id: Date.now().toString() }); storage.saveData(data); },
-    updateProduct: async (id: string, p: any) => { const data = storage.getData(); data.products = data.products.map((prod: any) => prod.id === id ? { ...prod, ...p } : prod); storage.saveData(data); },
-    deleteProduct: async (id: string) => { const data = storage.getData(); data.products = data.products.filter((prod: any) => prod.id !== id); storage.saveData(data); },
-    adjustStock: async (id: string, adj: any) => { const data = storage.getData(); const p = data.products.find((prod: any) => prod.id === id); if (p) { if (adj.type === 'in') p.qty += adj.quantity; else p.qty -= adj.quantity; storage.saveData(data); } }
+    addCategory: async (name: string) => { 
+      setAppData((prev: AppData) => ({ ...prev, categories: [...(prev.categories || []), { id: Date.now().toString(), name }] }));
+    },
+    deleteCategory: async (id: string) => { 
+      setAppData((prev: AppData) => ({ ...prev, categories: (prev.categories || []).filter((c: any) => c.id !== id) }));
+    },
+    addProduct: async (p: any) => { 
+      setAppData((prev: AppData) => ({ ...prev, products: [...(prev.products || []), { ...p, id: Date.now().toString() }] }));
+    },
+    updateProduct: async (id: string, p: any) => { 
+      setAppData((prev: AppData) => ({ ...prev, products: (prev.products || []).map((prod: any) => prod.id === id ? { ...prod, ...p } : prod) }));
+    },
+    deleteProduct: async (id: string) => { 
+      setAppData((prev: AppData) => ({ ...prev, products: (prev.products || []).filter((prod: any) => prod.id !== id) }));
+    },
+    adjustStock: async (id: string, adj: any) => { 
+      setAppData((prev: AppData) => {
+        const products = [...(prev.products || [])];
+        const idx = products.findIndex(prod => prod.id === id);
+        if (idx !== -1) {
+          const prod = { ...products[idx] };
+          if (adj.type === 'in') prod.qty += adj.quantity; else prod.qty -= adj.quantity;
+          products[idx] = prod;
+        }
+        return { ...prev, products };
+      });
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,13 +135,12 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
       await api.addProduct(pData);
     }
     setShowAddProductModal(false);
-    onRefresh();
+    setShowAddProductModal(false);
   };
 
   const handleDeleteProduct = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
       await api.deleteProduct(id);
-      onRefresh();
     }
   };
 
@@ -131,13 +149,11 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
     if (!newCategoryName) return;
     await api.addCategory(newCategoryName);
     setNewCategoryName('');
-    onRefresh();
   };
 
   const handleDeleteCategory = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
       await api.deleteCategory(id);
-      onRefresh();
     }
   };
 
@@ -447,7 +463,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                 const type = formData.get('type');
                 if (qty > 0) {
                   await api.adjustStock(adjustModal.id, { type, quantity: qty });
-                  onRefresh();
+                  setAdjustModal(null);
                   setAdjustModal(null);
                 }
               }} className="p-6 space-y-5">

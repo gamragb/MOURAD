@@ -335,6 +335,23 @@ export default function App() {
   const [isFirebaseLoading, setIsFirebaseLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<{type: 'success' | 'error' | 'info'; text: string} | null>(null);
 
+  // Auto Updater State
+  const [updateInfo, setUpdateInfo] = useState<any>(null);
+  const [updateReady, setUpdateReady] = useState(false);
+
+  useEffect(() => {
+    if ((window as any).electron) {
+      (window as any).electron.onUpdateAvailable((info: any) => {
+        setUpdateInfo(info || { version: "جديد", releaseNotes: "تم العثور على تحديث." });
+        setUpdateReady(false);
+      });
+      (window as any).electron.onUpdateDownloaded((info: any) => {
+        setUpdateInfo(info || { version: "جديد", releaseNotes: "تم تحميل التحديث." });
+        setUpdateReady(true);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const saved = localStorage.getItem('googleUser');
     if (saved) {
@@ -973,6 +990,53 @@ function MainLayout({
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Auto-Updater Modal */}
+      {updateInfo && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+          <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200" dir={isRtl ? "rtl" : "ltr"}>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <Download className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-slate-900 mb-1">
+                  {isRtl ? "تحديث جديد متوفر" : "New Update Available"}
+                </h3>
+                <p className="text-sm font-bold text-slate-500">
+                  {isRtl ? "الإصدار:" : "Version:"} <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md ml-1">{updateInfo.version}</span>
+                </p>
+              </div>
+            </div>
+            
+            {updateInfo.releaseNotes && (
+              <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100 max-h-[30vh] overflow-y-auto custom-scrollbar">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{isRtl ? "ما الجديد؟" : "What's new?"}</h4>
+                <div className="text-sm font-medium text-slate-700 prose prose-sm prose-slate" dangerouslySetInnerHTML={{ __html: updateInfo.releaseNotes }} />
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setUpdateInfo(null)} className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors">
+                {isRtl ? "تجاهل" : "Dismiss"}
+              </button>
+              {updateReady ? (
+                <button onClick={() => (window as any).electron.installUpdate()} className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  {isRtl ? "تثبيت الآن" : "Install Now"}
+                </button>
+              ) : (
+                <button disabled className="flex-1 py-3 px-4 bg-blue-600/50 text-white rounded-xl font-bold flex items-center justify-center gap-2 cursor-wait">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {isRtl ? "جاري التحميل..." : "Downloading..."}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

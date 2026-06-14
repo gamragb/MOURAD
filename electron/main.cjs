@@ -56,7 +56,7 @@ app.on('window-all-closed', function () {
 // Auto-Updater Events
 autoUpdater.on('update-available', (info) => {
   log.info('Update available.');
-  mainWindow.webContents.send('update_available');
+  mainWindow.webContents.send('update_available', info);
 });
 
 autoUpdater.on('update-not-available', (info) => {
@@ -66,19 +66,7 @@ autoUpdater.on('update-not-available', (info) => {
 
 autoUpdater.on('update-downloaded', (info) => {
   log.info('Update downloaded');
-  mainWindow.webContents.send('update_downloaded');
-  
-  // Prompt user to install the update
-  dialog.showMessageBox(mainWindow, {
-    type: 'info',
-    title: 'تحديث جديد جاهز (New Update Ready)',
-    message: 'تم تحميل التحديث بنجاح. هل تريد إعادة تشغيل البرنامج لتثبيته الآن؟',
-    buttons: ['نعم (Yes)', 'لاحقاً (Later)']
-  }).then((result) => {
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall();
-    }
-  });
+  mainWindow.webContents.send('update_downloaded', info);
 });
 
 autoUpdater.on('error', (err) => {
@@ -89,4 +77,9 @@ autoUpdater.on('error', (err) => {
 ipcMain.on('check_for_updates', () => {
   log.info('Manual update check requested');
   autoUpdater.checkForUpdatesAndNotify();
+});
+
+ipcMain.on('install_update', () => {
+  log.info('Install update requested by frontend');
+  autoUpdater.quitAndInstall();
 });
