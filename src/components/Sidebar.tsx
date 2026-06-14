@@ -87,7 +87,7 @@ export function Sidebar({
               BOUTABSSIL
             </span>
             <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mt-1 block opacity-70">
-              v0.1
+              v0.3.2
             </span>
           </div>
         </div>

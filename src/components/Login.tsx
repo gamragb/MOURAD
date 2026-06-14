@@ -183,7 +183,7 @@ export function Login({
             </div>
             <input
               type="text"
-              placeholder={isRtl ? "اسم المستخدم (admin)" : "Username (admin)"}
+              placeholder={isRtl ? "اسم المستخدم" : "Username"}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full h-16 bg-transparent text-center text-2xl font-black text-slate-900 placeholder-slate-300 outline-none tracking-[0.1em]"
@@ -196,7 +196,7 @@ export function Login({
             </div>
             <input
               type="password"
-              placeholder={`${t("admin_pass")} (1234)...`}
+              placeholder={`${t("admin_pass")}...`}
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               className="w-full h-16 bg-transparent text-center text-3xl font-black text-slate-900 placeholder-slate-300 outline-none tracking-[0.2em]"
@@ -215,7 +215,7 @@ export function Login({
         <div className="mt-10 flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 tracking-[0.2em] uppercase">
           <ShieldCheck size={14} className="text-emerald-500 animate-pulse" />
           <span>
-            {isRtl ? "حماية تامة • معالجة محلية آمنة" : "Secure Local Instance"}
+            {isRtl ? "حماية تامة • معالجة محلية آمنة" : "Secure Local Instance"} • v0.3.2
           </span>
         </div>
       </motion.div>

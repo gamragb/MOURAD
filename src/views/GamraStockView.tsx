@@ -337,73 +337,80 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
         {showAddProductModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddProductModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
-                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <Package className="w-6 h-6 text-primary" />
-                  {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden" dir="ltr">
+              <div className="p-8">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-8">
+                  <Plus className="w-4 h-4 text-indigo-600" />
+                  {editingProduct ? 'MODIFIER UN PRODUIT' : 'AJOUTER UN PRODUIT'}
                 </h3>
-                <button onClick={() => setShowAddProductModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
+                
+                <form onSubmit={handleSaveProduct} className="space-y-6">
+                  {/* Row 1 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOM DU PRODUIT</label>
+                      <input autoFocus required type="text" placeholder="Nom du Produit" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={name} onChange={e => setName(e.target.value)} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CATÉGORIE</label>
+                      <select className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all cursor-pointer font-medium text-slate-700" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                        <option value="">Non Classé</option>
+                        {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 2 */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="space-y-2 md:col-span-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CODE-BARRES</label>
+                      <input type="text" placeholder="Code-barres" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={barcode} onChange={e => setBarcode(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-3 relative">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">FOURNISSEUR</label>
+                        <button type="button" className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors">+ NEW</button>
+                      </div>
+                      <select className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all cursor-pointer font-medium text-slate-700" value={supplier} onChange={e => setSupplier(e.target.value)}>
+                        <option value="">Select Supplier</option>
+                        {suppliers.map((s:any) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PRIX D'ACHAT</label>
+                      <input type="number" step="0.01" min="0" placeholder="Prix d'Achat" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PRIX DE VENTE</label>
+                      <input required type="number" step="0.01" min="0" placeholder="Prix de Vente" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={price} onChange={e => setPrice(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">QUANTITÉ</label>
+                      <input required type="number" min="0" placeholder="Quantité" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-center" value={qty} onChange={e => setQty(e.target.value)} disabled={!!editingProduct} />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ALERT</label>
+                      <input required type="number" min="0" placeholder="5" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-center" value={minQty} onChange={e => setMinQty(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold uppercase tracking-widest transition-all">
+                      ENREGISTRER
+                    </button>
+                  </div>
+                </form>
+                
+                <button onClick={() => setShowAddProductModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleSaveProduct} className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">اسم المنتج *</label>
-                    <input autoFocus required type="text" placeholder="مثال: حليب ممتاز" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">الباركود</label>
-                    <input type="text" placeholder="123456789..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" value={barcode} onChange={e => setBarcode(e.target.value)} />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">التصنيف</label>
-                    <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer font-bold" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-                      <option value="">بدون تصنيف</option>
-                      {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ثمن الشراء</label>
-                    <div className="relative">
-                      <input type="number" step="0.01" min="0" placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-black">درهم</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ثمن البيع *</label>
-                    <div className="relative">
-                      <input required type="number" step="0.01" min="0" placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-black text-primary" value={price} onChange={e => setPrice(e.target.value)} />
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xs font-black">درهم</span>
-                    </div>
-                  </div>
-
-                  {!editingProduct && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">الكمية الأولية *</label>
-                      <input required type="number" min="0" placeholder="0" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-black" value={qty} onChange={e => setQty(e.target.value)} />
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">المورد</label>
-                    <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer font-bold" value={supplier} onChange={e => setSupplier(e.target.value)}>
-                      <option value="">اختيار مورد...</option>
-                      {suppliers.map((s:any) => <option key={s.id} value={s.name}>{s.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex gap-3">
-                  <button type="button" onClick={() => setShowAddProductModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">إلغاء</button>
-                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ المنتج</button>
-                </div>
-              </form>
             </motion.div>
           </div>
         )}
