@@ -53,7 +53,7 @@ export function Sidebar({
       setUpdateStatus('checking');
       (window as any).electron.checkForUpdates();
     } else {
-      alert(isRtl ? "خدمة التحديث غير متوفرة" : "Updater service not available");
+      alert(isRtl ? t('update_service_unavailable') : "Updater service not available");
     }
   };
 
@@ -61,9 +61,9 @@ export function Sidebar({
     { id: "dashboard", label: t("dashboard"), icon: BarChart3, show: true },
     { id: "pos", label: t("pos"), icon: ShoppingCart, show: true },
     { id: "stock", label: t("stock"), icon: Boxes, show: currentUser?.role === 'admin' || currentUser?.permissions?.stock },
-    { id: "suppliers", label: isRtl ? "الموردين" : "Suppliers", icon: Store, show: currentUser?.role === 'admin' || currentUser?.permissions?.suppliers },
+    { id: "suppliers", label: isRtl ? t('suppliers') : "Suppliers", icon: Store, show: currentUser?.role === 'admin' || currentUser?.permissions?.suppliers },
     { id: "customers", label: t("customers"), icon: Users, show: currentUser?.role === 'admin' || currentUser?.permissions?.customers },
-    { id: "archive", label: isRtl ? "الأرشيف والنشاطات" : "Archive & Logs", icon: Archive, show: currentUser?.role === 'admin' || currentUser?.permissions?.history },
+    { id: "archive", label: isRtl ? t('activity_log') : "Archive & Logs", icon: Archive, show: currentUser?.role === 'admin' || currentUser?.permissions?.history },
     { id: "settings", label: t("settings"), icon: Settings, show: currentUser?.role === 'admin' },
   ];
 
@@ -108,10 +108,10 @@ export function Sidebar({
            updateStatus === 'error' ? <RefreshCw className="w-3.5 h-3.5" /> :
            <RefreshCw className="w-3.5 h-3.5" />}
           {updateStatus === 'checking' ? (isRtl ? "جاري البحث..." : "Checking...") :
-           updateStatus === 'available' ? (isRtl ? "جاري التحميل..." : "Downloading...") :
+           updateStatus === 'available' ? (isRtl ? t('downloading_update') : "Downloading...") :
            updateStatus === 'downloaded' ? (isRtl ? "تحديث جاهز" : "Update Ready") :
-           updateStatus === 'not-available' ? (isRtl ? "لا يوجد تحديث" : "Up to date") :
-           updateStatus === 'error' ? (isRtl ? "خطأ بالتحديث" : "Update Error") :
+           updateStatus === 'not-available' ? (isRtl ? t('up_to_date') : "Up to date") :
+           updateStatus === 'error' ? (isRtl ? t('update_error') : "Update Error") :
            (isRtl ? "البحث عن تحديث" : "Check Update")}
         </button>
       </div>
@@ -139,7 +139,7 @@ export function Sidebar({
           className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary transition-all hover:bg-primary hover:text-white"
         >
           <Bell size={18} strokeWidth={3} />
-          {isRtl ? "الإشعارات" : "Notifications"}
+          {isRtl ? t('notifications') : "Notifications"}
         </button>
 
         <button

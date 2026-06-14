@@ -1,3 +1,4 @@
+import { translations, Language } from '../i18n';
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -11,6 +12,9 @@ type SortKey = 'name' | 'price' | 'costPrice' | 'qty' | 'supplier';
 type SortConfig = { key: SortKey; direction: 'asc' | 'desc' } | null;
 
 export default function GamraStockView({ permissions, appData, setAppData, language }: { permissions: any, appData: AppData, setAppData: any, language: string }) {
+  const isRtlValue = language === 'ar';
+  const t = (key: string) => (translations[language as Language] as any)?.[key] || key;
+
   const products = appData.products || [];
   const categories = appData.categories || [];
   const suppliers = appData.suppliers || [];
@@ -121,7 +125,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !price || (!qty && !editingProduct)) return alert("يرجى إدخال الحقول الأساسية");
+    if (!name || !price || (!qty && !editingProduct)) return alert(t('enter_basic_fields'));
     
     const pData = {
       name, price: Number(price), costPrice: Number(costPrice) || 0,
@@ -139,7 +143,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+    if (confirm(t('confirm_delete_product'))) {
       await api.deleteProduct(id);
     }
   };
@@ -188,9 +192,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-            <Package className="w-7 h-7 text-primary" />
-            المخزون والمنتجات
-          </h1>
+            <Package className="w-7 h-7 text-primary" />{t('products_and_inventory')}</h1>
           <p className="text-slate-500 text-sm mt-1">إدارة منتجاتك، وتصنيفاتك، ومتابعة الكميات بكل سهولة</p>
         </div>
         <div className="flex items-center gap-3">
@@ -198,16 +200,15 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             <LayoutGrid className="w-4 h-4" /> التصنيفات
           </button>
           <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4" /> إضافة منتج
-          </button>
+            <Plus className="w-4 h-4" />{t('add_product')}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Boxes} title="إجمالي المنتجات" value={totalProducts} colorClass="bg-blue-500/10 text-blue-500" />
         <StatCard icon={DollarSign} title="قيمة المخزون" value={formatNumber(totalValue) + " درهم"} colorClass="bg-green-500/10 text-green-500" />
-        <StatCard icon={AlertTriangle} title="منتجات قاربت على النفاذ" value={lowStockCount} colorClass="bg-amber-500/10 text-amber-500" />
-        <StatCard icon={X} title="منتجات نفدت" value={outOfStockCount} colorClass="bg-red-500/10 text-red-500" />
+        <StatCard icon={AlertTriangle} title={t('products_low_stock')} value={lowStockCount} colorClass="bg-amber-500/10 text-amber-500" />
+        <StatCard icon={X} title={t('products_out_of_stock')} value={outOfStockCount} colorClass="bg-red-500/10 text-red-500" />
       </div>
 
       {/* Filters and Search */}
@@ -216,7 +217,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input 
             type="text" 
-            placeholder="بحث باسم المنتج أو الباركود..."
+            placeholder={t('search_product')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-primary outline-none font-medium"
@@ -230,7 +231,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
           >
             <option value="">كل التصنيفات</option>
-            <option value="none">بدون تصنيف</option>
+            <option value="none">{t('no_category')}</option>
             {categories.map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -242,9 +243,9 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
           >
             <option value="all">كل الحالات</option>
-            <option value="inStock">متوفر</option>
-            <option value="lowStock">قارب على النفاذ</option>
-            <option value="outOfStock">نفد</option>
+            <option value="inStock">{t('status_available')}</option>
+            <option value="lowStock">{t('status_low_stock')}</option>
+            <option value="outOfStock">{t('status_out_of_stock')}</option>
           </select>
         </div>
       </div>
@@ -270,7 +271,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                 <th onClick={() => handleSort('price')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
                   <div className="flex items-center gap-2">ثمن البيع {sortConfig?.key === 'price' && <ArrowUpDown className="w-3 h-3" />}</div>
                 </th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">إجراءات</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -300,7 +301,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                       <td className="p-4">
                         <div className="flex flex-col gap-1">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 border border-slate-200 text-slate-500 w-fit">
-                            {cat ? cat.name : 'بدون تصنيف'}
+                            {cat ? cat.name : t('no_category')}
                           </span>
                           {p.supplier && <span className="text-[10px] text-primary/80 font-medium">{p.supplier}</span>}
                         </div>
@@ -517,12 +518,12 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                 </div>
                 
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">الكمية</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('quantity')}</label>
                   <input name="qty" required type="number" min="1" placeholder="مثال: 10" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xl font-black text-center focus:border-primary outline-none transition-all" />
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setAdjustModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">إلغاء</button>
+                  <button type="button" onClick={() => setAdjustModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">{t('cancel')}</button>
                   <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">تأكيد</button>
                 </div>
               </form>

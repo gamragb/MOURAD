@@ -1,3 +1,4 @@
+import { translations, Language } from './i18n';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -104,146 +105,7 @@ import { NotificationsView } from "./views/NotificationsView";
 
 // --- Constants & Translations ---
 
-const translations: any = {
-  ar: {
-    dashboard: "التقارير والتحليلات",
-    pos: "نقطة البيع",
-    stock: "إدارة المخزون",
-    customers: "إدارة الزبناء",
-    settings: "الإعدادات",
-    logout: "إغلاق البرنامج",
-    active_engine: "محرك_نشط",
-    local_data: "البيانات مؤمنة محلياً",
-    search: "بحث...",
-    cart: "السلة النشطة",
-    pay: "إتمام البيع",
-    subtotal: "المجموع الفرعي",
-    discount: "التخفيض",
-    total: "المجموع الإجمالي",
-    payment_method: "طريقة الدفع",
-    cash: "نقداً",
-    card: "بطاقة",
-    wallet: "محفظة",
-    credit: "كريدي",
-    add_product: "إضافة منتج",
-    categories_btn: "الفئات",
-    stock_header: "المخزن والتصنيفات",
-    password_change: "تغيير كلمة المرور",
-    current_pass: "كلمة المرور الحالية",
-    new_pass: "كلمة المرور الجديدة",
-    save_pass: "حفظ كلمة المرور",
-    language: "اللغة",
-    appearance: "المظهر والألوان",
-    shop_info: "معلومات المتجر",
-    shop_name: "اسم المحل",
-    shop_address: "العنوان / المدينة",
-    shop_phone: "رقم هاتف المحل",
-    currency: "العملة",
-    backup: "الأمان والبيانات",
-    export: "تصدير نسخة احتياطية",
-    clear: "مسح جميع البيانات",
-    low_stock: "تنبيهات نقص المخزون",
-    reorder: "قائمة إعادة الطلب",
-    welcome: "مرحباً بك في نظام التسيير المتكامل",
-    login: "دخول النظام",
-    access_restricted: "الوصول مقيد • النظام المحلي",
-    admin_pass: "كلمة مرور المدير",
-    archive: "أرشيف الفواتير",
-    reports: "التقارير الشهرية",
-  },
-  fr: {
-    dashboard: "Analyses & Rapports",
-    pos: "Point de Vente",
-    stock: "Stock & Catégories",
-    customers: "Clients",
-    settings: "Paramètres",
-    logout: "Déconnexion",
-    active_engine: "Moteur_actif",
-    local_data: "Données localement sécurisées",
-    search: "Rechercher...",
-    cart: "Panier Actif",
-    pay: "Payer Maintenant",
-    subtotal: "Sous-total",
-    discount: "Remise",
-    total: "Total Général",
-    payment_method: "Mode de paiement",
-    cash: "Espèces",
-    card: "Carte",
-    wallet: "Web",
-    credit: "Crédit",
-    add_product: "Ajouter Produit",
-    categories_btn: "Catégories",
-    stock_header: "Gestion de Stock",
-    password_change: "Changer Mot de Passe",
-    current_pass: "Mot de passe actuel",
-    new_pass: "Nouveau mot de passe",
-    save_pass: "Enregistrer",
-    language: "Langue",
-    appearance: "Apparence & Couleurs",
-    shop_info: "Infos Boutique",
-    shop_name: "Nom de la Boutique",
-    shop_address: "Adresse de la Boutique",
-    shop_phone: "Numéro de Téléphone",
-    currency: "Devise",
-    backup: "Sécurité & Données",
-    export: "Exporter Backup",
-    clear: "Effacer Tout",
-    low_stock: "Rupture de Stock",
-    reorder: "Liste de Réappro",
-    welcome: "Bienvenue sur BOUTABSSIL",
-    login: "Se Connecter",
-    access_restricted: "Accès Restreint • Système Local",
-    admin_pass: "Mot de passe Administrateur",
-    archive: "Archive des Factures",
-    reports: "Rapports Mensuels",
-  },
-  en: {
-    dashboard: "Analytics & Reports",
-    pos: "Point of Sale",
-    stock: "Inventory",
-    customers: "Customers",
-    settings: "Settings",
-    logout: "Logout",
-    active_engine: "Active_engine",
-    local_data: "Data secured locally",
-    search: "Search...",
-    cart: "Active Cart",
-    pay: "Checkout Now",
-    subtotal: "Subtotal",
-    discount: "Discount",
-    total: "Grand Total",
-    payment_method: "Payment Method",
-    cash: "Cash",
-    card: "Card",
-    wallet: "Web",
-    credit: "Credit",
-    add_product: "Add Product",
-    categories_btn: "Categories",
-    stock_header: "Stock Management",
-    password_change: "Change Password",
-    current_pass: "Current Password",
-    new_pass: "New Password",
-    save_pass: "Save Password",
-    language: "Language",
-    appearance: "Appearance & Colors",
-    shop_info: "Shop Info",
-    shop_name: "Shop Name",
-    shop_address: "Shop Location / Address",
-    shop_phone: "Shop Phone Number",
-    currency: "Currency",
-    backup: "Security & Backup",
-    export: "Export Data",
-    clear: "Wipe All Data",
-    low_stock: "Low Stock Alerts",
-    reorder: "Reorder List",
-    welcome: "Welcome to BOUTABSSIL",
-    login: "Login",
-    access_restricted: "Restricted Access • Local System",
-    admin_pass: "Admin Password",
-    archive: "Invoices Archive",
-    reports: "Monthly Reports",
-  },
-};
+
 
 // --- Debt Status & Alert Helper ---
 export function getDebtStatus(client: any, isRtl: boolean) {
@@ -299,7 +161,7 @@ export default function App() {
   const [appData, setAppData] = useState<AppData>(storage.getData());
 
   const lang = appData.settings?.language || "ar";
-  const t = (key: string) => translations[lang]?.[key] || key;
+  const t = (key: string) => (translations as any)[lang]?.[key] || key;
   const isRtl = lang === "ar";
 
   const getInvoiceNumber = (saleId: string) => {
@@ -955,28 +817,16 @@ function MainLayout({
                 />
                 <div className="pt-6 border-t border-slate-200">
                   <h2 className="text-2xl font-black mb-6 px-4 italic text-slate-800">{isRtl ? "سجل النشاطات" : "Activity Logs"}</h2>
-                  <ActivityLogView
-                    key="logs"
-                    isRtl={isRtl}
-                  />
+                  <ActivityLogView key="logs" isRtl={isRtl} language={isRtl ? 'ar' : 'fr'} />
                 </div>
               </div>
             )}
             {activeTab === "staff" && currentUser && (
-              <StaffManagementView
-                key="staff"
-                currentUser={currentUser}
-                onRefresh={() => setAppData(storage.getData())}
-                isRtl={isRtl}
-                t={t}
-              />
+              <StaffManagementView key="staff" currentUser={currentUser} onRefresh={() => setAppData(storage.getData())} isRtl={isRtl} t={t} language={isRtl ? 'ar' : 'fr'} />
             )}
             
             {activeTab === "notifications" && (
-              <NotificationsView
-                key="notifications"
-                isRtl={isRtl}
-              />
+              <NotificationsView key="notifications" isRtl={isRtl} language={isRtl ? 'ar' : 'fr'} />
             )}
             {activeTab === "settings" && (
               <SettingsView
