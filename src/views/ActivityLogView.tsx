@@ -1,8 +1,12 @@
+import { translations, Language } from '../i18n';
 import { motion } from "motion/react";
 import { History, Activity } from "lucide-react";
 import { storage } from "../storage";
 
-export function ActivityLogView({ isRtl }: { isRtl: boolean }) {
+export function ActivityLogView({ isRtl, language }: { isRtl: boolean, language: string }) {
+  const isRtlValue = language === 'ar';
+  const t = (key: string) => (translations[language as Language] as any)?.[key] || key;
+
   const data = storage.getData();
   const logs = data.activityLogs || [];
 
@@ -10,7 +14,7 @@ export function ActivityLogView({ isRtl }: { isRtl: boolean }) {
     <div className="space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <div>
         <h2 className="text-3xl font-black italic text-slate-800 uppercase">
-          {isRtl ? "سجل نشاطات النظام" : "System Activity Logs"}
+          {isRtl ? t('system_activity_log') : "System Activity Logs"}
         </h2>
       </div>
 

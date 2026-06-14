@@ -1,3 +1,4 @@
+import { translations, Language } from '../i18n';
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -8,6 +9,9 @@ import { formatNumber, cn } from '../utils';
 import { storage, AppData, TransactionRecord } from '../storage';
 
 export default function GamraClientsView({ permissions, appData, setAppData, language }: { permissions: any, appData: AppData, setAppData: any, language: string }) {
+  const isRtlValue = language === 'ar';
+  const t = (key: string) => (translations[language as Language] as any)?.[key] || key;
+
   const clients = appData.clients || [];
   const onRefresh = () => setAppData(storage.getData());
 
@@ -49,7 +53,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return alert("يرجى إدخال اسم الزبون");
+    if (!name) return alert(t('enter_client_name'));
     
     const cData = { name, phone, address, notes };
     const data = storage.getData();
@@ -67,7 +71,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
   };
 
   const handleDeleteClient = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الزبون؟ لا يمكن التراجع عن هذا الإجراء.')) {
+    if (confirm(t('confirm_delete_client'))) {
       const data = storage.getData();
       data.clients = data.clients.filter((cli: any) => cli.id !== id);
       storage.saveData(data);
@@ -139,15 +143,12 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-            <Users className="w-7 h-7 text-primary" />
-            إدارة الزبائن
-          </h1>
+            <Users className="w-7 h-7 text-primary" />{t('clients_management')}</h1>
           <p className="text-slate-500 text-sm mt-1">إدارة معلومات الزبائن، وتتبع الحسابات والديون (الكريدي) بسهولة</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4" /> إضافة زبون
-          </button>
+            <Plus className="w-4 h-4" />{t('add_client')}</button>
         </div>
       </div>
 
@@ -162,7 +163,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input 
             type="text" 
-            placeholder="بحث باسم الزبون، رقم الهاتف..."
+            placeholder={t('search_client')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-primary outline-none font-medium"
@@ -179,7 +180,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">اسم الزبون</th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">التواصل</th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">ديون الزبون (الكريدي)</th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">إجراءات</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -219,7 +220,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                           )}>
                             {formatNumber(Math.abs(c.debt || 0))} درهم
                           </span>
-                          {(c.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">كريدي</span>}
+                          {(c.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">{t('credit')}</span>}
                           {(c.debt || 0) < 0 && <span className="text-[10px] font-bold text-green-500">مسبق</span>}
                         </div>
                       ) : <span className="text-sm font-black text-slate-500">***</span>}
@@ -234,11 +235,11 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                         )}
                         <button onClick={() => setClientDetails(c)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
                           <Eye className="w-4 h-4" />
-                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">التفاصيل والأرشيف</span>
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">{t('details_and_archive')}</span>
                         </button>
                         <button onClick={() => openEditModal(c)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors group relative">
                           <Edit2 className="w-4 h-4" />
-                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">تعديل</span>
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">{t('edit')}</span>
                         </button>
                         <button onClick={() => handleDeleteClient(c.id)} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors group relative">
                           <Trash2 className="w-4 h-4" />
@@ -296,24 +297,21 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
 
                 <div>
                   <h4 className="font-black text-slate-900 mb-4 flex items-center gap-2">
-                    <Archive className="w-5 h-5 text-primary" /> سجل المعاملات والكريدي
-                  </h4>
+                    <Archive className="w-5 h-5 text-primary" />{t('transaction_history')}</h4>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
                     <table className="w-full text-right">
                       <thead className="bg-white border-b border-slate-200">
                         <tr>
-                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">التاريخ</th>
-                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">النوع</th>
-                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">المبلغ</th>
-                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">ملاحظات</th>
+                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">{t('date')}</th>
+                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">{t('type')}</th>
+                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">{t('amount')}</th>
+                          <th className="p-3 text-xs font-black text-slate-500 uppercase tracking-widest">{t('notes')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border-subtle">
                         {(!clientDetails.transactions || clientDetails.transactions.length === 0) ? (
                           <tr>
-                            <td colSpan={4} className="p-8 text-center text-slate-500 font-bold text-sm">
-                              لا توجد معاملات سابقة مسجلة.
-                            </td>
+                            <td colSpan={4} className="p-8 text-center text-slate-500 font-bold text-sm">{t('no_previous_transactions')}</td>
                           </tr>
                         ) : (
                           clientDetails.transactions.map((t:any) => (
@@ -327,9 +325,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                                     إضافة كريدي
                                   </span>
                                 ) : (
-                                  <span className="inline-flex px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-                                    تخليص مبلغ
-                                  </span>
+                                  <span className="inline-flex px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20">{t('clear_amount')}</span>
                                 )}
                               </td>
                               <td className="p-3">
@@ -389,7 +385,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">المبلغ *</label>
                   <div className="relative">
                     <input name="amount" required type="number" step="0.01" min="0.01" placeholder="مثال: 500" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-2xl font-black text-center focus:border-primary outline-none transition-all" />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black">درهم</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black">{t('mad')}</span>
                   </div>
                 </div>
 
@@ -399,7 +395,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">طريقة الدفع</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">{t('payment_method')}</label>
                   <div className="flex gap-3">
                     <label className="flex-1 cursor-pointer">
                       <input type="radio" name="paymentMethod" value="cash" defaultChecked className="peer sr-only" onChange={(e) => {
@@ -428,8 +424,8 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setAdjustDebtModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">إلغاء</button>
-                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">تأكيد العملية</button>
+                  <button type="button" onClick={() => setAdjustDebtModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">{t('cancel')}</button>
+                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">{t('confirm_operation')}</button>
                 </div>
               </form>
             </motion.div>
@@ -474,7 +470,7 @@ export default function GamraClientsView({ permissions, appData, setAppData, lan
                 </div>
 
                 <div className="mt-8 flex gap-3">
-                  <button type="button" onClick={() => setShowAddClientModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">إلغاء</button>
+                  <button type="button" onClick={() => setShowAddClientModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">{t('cancel')}</button>
                   <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ الزبون</button>
                 </div>
               </form>

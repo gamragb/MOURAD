@@ -1,7 +1,11 @@
+import { translations, Language } from '../i18n';
 import { Bell, AlertTriangle, AlertCircle, TrendingDown } from "lucide-react";
 import { storage } from "../storage";
 
-export function NotificationsView({ isRtl }: { isRtl: boolean }) {
+export function NotificationsView({ isRtl, language }: { isRtl: boolean, language: string }) {
+  const isRtlValue = language === 'ar';
+  const t = (key: string) => (translations[language as Language] as any)?.[key] || key;
+
   const data = storage.getData();
   const products = data.products || [];
   const clients = data.clients || [];
@@ -14,7 +18,7 @@ export function NotificationsView({ isRtl }: { isRtl: boolean }) {
       notifications.push({
         id: `stock-${p.id}`,
         type: 'STOCK',
-        title: isRtl ? "نقص في المخزون" : "Low Stock",
+        title: isRtl ? t('low_stock_alert') : "Low Stock",
         message: isRtl ? `المنتج "${p.name}" وصل إلى الحد الأدنى (${p.qty})` : `Product "${p.name}" reached minimum stock (${p.qty})`,
         icon: <TrendingDown className="text-amber-500" />
       });
@@ -33,7 +37,7 @@ export function NotificationsView({ isRtl }: { isRtl: boolean }) {
         notifications.push({
           id: `debt-${c.id}`,
           type: 'DEBT',
-          title: isRtl ? "تنبيه موعد سداد" : "Payment Due Alert",
+          title: isRtl ? t('payment_due_alert') : "Payment Due Alert",
           message: isRtl ? `الزبون "${c.name}" موعد سداده اقترب أو حان (${c.dueDate}) بمبلغ ${c.debt}` : `Customer "${c.name}" payment is due (${c.dueDate}) for ${c.debt}`,
           icon: <AlertCircle className="text-red-500" />
         });
@@ -46,7 +50,7 @@ export function NotificationsView({ isRtl }: { isRtl: boolean }) {
       <div>
         <h2 className="text-3xl font-black italic text-slate-800 uppercase flex items-center gap-3">
           <Bell className="text-primary" size={32} />
-          {isRtl ? "مركز الإشعارات" : "Notifications Center"}
+          {isRtl ? t('notifications_center') : "Notifications Center"}
         </h2>
       </div>
 

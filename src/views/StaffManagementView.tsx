@@ -1,19 +1,16 @@
+import { translations, Language } from '../i18n';
 import { useState } from "react";
 import { motion } from "motion/react";
 import { UserPlus, ShieldAlert, Key, Trash2 } from "lucide-react";
 import { storage, UserProfile } from "../storage";
 
-export function StaffManagementView({
-  currentUser,
+export function StaffManagementView({ currentUser,
   onRefresh,
   isRtl,
-  t
-}: {
-  currentUser: UserProfile;
+  t, language }: { currentUser: UserProfile;
   onRefresh: () => void;
   isRtl: boolean;
-  t: any;
-}) {
+  t: any, language: string }) {
   const data = storage.getData();
   const users = data.users || [];
 
@@ -37,7 +34,7 @@ export function StaffManagementView({
     if (!newUsername || !newPassword) return;
 
     if (users.find(u => u.username === newUsername)) {
-      alert("اسم المستخدم موجود مسبقاً");
+      alert(t('username_exists'));
       return;
     }
 
@@ -69,10 +66,10 @@ export function StaffManagementView({
 
   const handleDeleteUser = (id: string) => {
     if (id === currentUser.id) {
-      alert("لا يمكنك حذف حسابك الشخصي");
+      alert(t('cannot_delete_own_account'));
       return;
     }
-    if (window.confirm("هل أنت متأكد من حذف هذا الموظف؟")) {
+    if (window.confirm(t('confirm_delete_employee'))) {
       const userToDelete = users.find(u => u.id === id);
       storage.update("users", users.filter(u => u.id !== id));
       storage.logActivity('STAFF', 'delete', `تم حذف موظف: ${userToDelete?.username}`, currentUser.id, currentUser.username);
@@ -103,9 +100,7 @@ export function StaffManagementView({
 
   if (currentUser.role !== 'admin') {
     return (
-      <div className="flex h-full items-center justify-center text-red-500 font-bold text-2xl">
-        ليس لديك صلاحية للدخول إلى هذه الصفحة
-      </div>
+      <div className="flex h-full items-center justify-center text-red-500 font-bold text-2xl">{t('no_access_permission')}</div>
     );
   }
 
@@ -113,7 +108,7 @@ export function StaffManagementView({
     <div className="space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <div>
         <h2 className="text-3xl font-black italic text-slate-800 uppercase">
-          {isRtl ? "إدارة الموظفين" : "Staff Management"}
+          {isRtl ? t('employees_management') : "Staff Management"}
         </h2>
       </div>
 
@@ -127,7 +122,7 @@ export function StaffManagementView({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <input
               type="text"
-              placeholder={isRtl ? "اسم المستخدم" : "Username"}
+              placeholder={isRtl ? t('username') : "Username"}
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white"
@@ -135,7 +130,7 @@ export function StaffManagementView({
             />
             <input
               type="password"
-              placeholder={isRtl ? "كلمة المرور" : "Password"}
+              placeholder={isRtl ? t('password') : "Password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white"
@@ -148,14 +143,14 @@ export function StaffManagementView({
             >
               <option value="staff">{isRtl ? "موظف مبيعات" : "Sales Staff"}</option>
               <option value="manager">{isRtl ? "مسؤول (صلاحيات مخصصة)" : "Manager"}</option>
-              <option value="admin">{isRtl ? "مدير نظام" : "Administrator"}</option>
+              <option value="admin">{isRtl ? t('system_admin') : "Administrator"}</option>
             </select>
           </div>
 
           {newRole !== 'admin' && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
               <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-500">
-                {isRtl ? "تحديد الصلاحيات" : "Permissions"}
+                {isRtl ? t('set_permissions') : "Permissions"}
               </h4>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {Object.keys(newPerms).map((k) => (
@@ -190,13 +185,13 @@ export function StaffManagementView({
                 {isRtl ? "المستخدم" : "User"}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 text-center`}>
-                {isRtl ? "الرتبة" : "Role"}
+                {isRtl ? t('role') : "Role"}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 text-center`}>
                 {isRtl ? "الصلاحيات" : "Permissions"}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 ${isRtl ? 'text-left' : 'text-right'}`}>
-                {isRtl ? "إجراءات" : "Actions"}
+                {isRtl ? t('actions') : "Actions"}
               </th>
             </tr>
           </thead>
