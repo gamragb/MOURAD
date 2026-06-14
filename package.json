@@ -53,6 +53,7 @@
   "build": {
     "appId": "com.mourad.pos",
     "productName": "MOURAD",
+    "compression": "store",
     "directories": {
       "output": "C:/MOURAD_BUILD_OUTPUT"
     },
