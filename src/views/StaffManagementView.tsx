@@ -108,21 +108,21 @@ export function StaffManagementView({ currentUser,
     <div className="space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <div>
         <h2 className="text-3xl font-black italic text-slate-800 uppercase">
-          {isRtl ? t('employees_management') : "Staff Management"}
+          {t('employees_management')}
         </h2>
       </div>
 
       <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
         <h3 className="mb-6 text-lg font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
           <UserPlus className="text-primary" />
-          {isRtl ? "إضافة موظف جديد" : "Add New Staff"}
+          {t('add_new_staff')}
         </h3>
         
         <form onSubmit={handleAddUser} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <input
               type="text"
-              placeholder={isRtl ? t('username') : "Username"}
+              placeholder={t('username')}
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white"
@@ -130,7 +130,7 @@ export function StaffManagementView({ currentUser,
             />
             <input
               type="password"
-              placeholder={isRtl ? t('password') : "Password"}
+              placeholder={t('password')}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white"
@@ -141,16 +141,16 @@ export function StaffManagementView({ currentUser,
               onChange={(e: any) => setNewRole(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white"
             >
-              <option value="staff">{isRtl ? "موظف مبيعات" : "Sales Staff"}</option>
-              <option value="manager">{isRtl ? "مسؤول (صلاحيات مخصصة)" : "Manager"}</option>
-              <option value="admin">{isRtl ? t('system_admin') : "Administrator"}</option>
+              <option value="staff">{t('sales_role')}</option>
+              <option value="manager">{t('custom_role')}</option>
+              <option value="admin">{t('system_admin')}</option>
             </select>
           </div>
 
           {newRole !== 'admin' && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
               <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-500">
-                {isRtl ? t('set_permissions') : "Permissions"}
+                {t('set_permissions')}
               </h4>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {Object.keys(newPerms).map((k) => (
@@ -172,7 +172,7 @@ export function StaffManagementView({ currentUser,
             type="submit"
             className="rounded-2xl bg-primary px-8 py-4 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-primary/90 active:scale-95"
           >
-            {isRtl ? "إضافة الحساب" : "Create Account"}
+          {t('add_account_btn')}
           </button>
         </form>
       </div>
@@ -182,16 +182,16 @@ export function StaffManagementView({ currentUser,
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 ${isRtl ? 'text-right' : 'text-left'}`}>
-                {isRtl ? "المستخدم" : "User"}
+                {t('user_col')}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 text-center`}>
-                {isRtl ? t('role') : "Role"}
+                {t('role')}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 text-center`}>
-                {isRtl ? "الصلاحيات" : "Permissions"}
+                {t('permissions_label')}
               </th>
               <th className={`p-6 text-xs font-black uppercase tracking-widest text-slate-400 ${isRtl ? 'text-left' : 'text-right'}`}>
-                {isRtl ? t('actions') : "Actions"}
+                {t('actions')}
               </th>
             </tr>
           </thead>
@@ -203,7 +203,7 @@ export function StaffManagementView({ currentUser,
                     {u.username}
                     {u.id === currentUser.id && (
                       <span className="ml-2 rounded bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700">
-                        {isRtl ? "أنت" : "YOU"}
+                        {t('you_label')}
                       </span>
                     )}
                   </div>
@@ -220,7 +220,7 @@ export function StaffManagementView({ currentUser,
                 <td className="p-6">
                   <div className="flex flex-wrap gap-2 justify-center">
                     {u.role === 'admin' ? (
-                      <span className="text-xs font-bold text-emerald-500">All Permissions</span>
+                      <span className="text-xs font-bold text-emerald-500">{t('all_permissions')}</span>
                     ) : (
                       Object.keys(u.permissions || {}).map((k) => (
                         <button

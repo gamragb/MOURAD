@@ -143,7 +143,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
             <Truck className="w-7 h-7 text-primary" />{t('suppliers_management')}</h1>
-          <p className="text-slate-500 text-sm mt-1">إدارة معلومات الموردين، وتتبع الحسابات والديون بسهولة</p>
+          <p className="text-slate-500 text-sm mt-1">{t('suppliers_management_desc')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
@@ -152,8 +152,8 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard icon={Truck} title="إجمالي الموردين" value={totalSuppliers} colorClass="bg-blue-500/10 text-blue-500" />
-        <StatCard icon={DollarSign} title="مجموع ديون الموردين" value={true ? formatNumber(totalSupplierDebt) + " درهم" : '***'} colorClass="bg-red-500/10 text-red-500" />
+        <StatCard icon={Truck} title={t('total_suppliers_label')} value={totalSuppliers} colorClass="bg-blue-500/10 text-blue-500" />
+        <StatCard icon={DollarSign} title={t('total_suppliers_debt_label')} value={true ? formatNumber(totalSupplierDebt) + " " + t('mad') : '***'} colorClass="bg-red-500/10 text-red-500" />
       </div>
 
       {/* Filters and Search */}
@@ -176,9 +176,9 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
           <table className="w-full text-right">
             <thead className="bg-slate-50/50 border-b border-slate-200">
               <tr>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">اسم المورد</th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">التواصل</th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">الديون المستحقة (لك/عليك)</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">{t('supplier_name_col')}</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">{t('contact_col')}</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">{t('debt_col')}</th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">{t('actions')}</th>
               </tr>
             </thead>
@@ -188,8 +188,8 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                   <td colSpan={4} className="p-8 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-3">
                       <Archive className="w-12 h-12 opacity-20" />
-                      <p className="font-bold text-lg">لا يوجد موردين</p>
-                      <p className="text-sm">لم يتم العثور على أي مورد يطابق بحثك.</p>
+                      <p className="font-bold text-lg">{t('no_suppliers_found').split('.')[0]}</p>
+                      <p className="text-sm">{t('no_suppliers_found')}</p>
                     </div>
                   </td>
                 </tr>
@@ -217,10 +217,10 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                             (s.debt || 0) < 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : 
                             "bg-slate-50 border-slate-200 text-slate-500"
                           )}>
-                            {formatNumber(Math.abs(s.debt || 0))} درهم
+                            {formatNumber(Math.abs(s.debt || 0))} {t('mad')}
                           </span>
-                          {(s.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">عليك</span>}
-                          {(s.debt || 0) < 0 && <span className="text-[10px] font-bold text-green-500">لك</span>}
+                          {(s.debt || 0) > 0 && <span className="text-[10px] font-bold text-red-500">{t('owed_by_you')}</span>}
+                          {(s.debt || 0) < 0 && <span className="text-[10px] font-bold text-green-500">{t('owed_to_you')}</span>}
                         </div>
                       ) : <span className="text-sm font-black text-slate-500">***</span>}
                     </td>
@@ -229,7 +229,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                         {true && (
                           <button onClick={() => setAdjustDebtModal(s)} className="p-2 hover:bg-amber-500/10 text-amber-500 rounded-lg transition-colors group relative">
                             <DollarSign className="w-4 h-4" />
-                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">إدارة الديون</span>
+                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">{t('manage_debts')}</span>
                           </button>
                         )}
                         <button onClick={() => setSupplierDetails(s)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
@@ -242,7 +242,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                         </button>
                         <button onClick={() => handleDeleteSupplier(s.id)} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors group relative">
                           <Trash2 className="w-4 h-4" />
-                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">حذف</span>
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">{t('delete_btn')}</span>
                         </button>
                       </div>
                     </td>
@@ -278,25 +278,25 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
                 <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-slate-500 mb-1">الرصيد الحالي (الدين)</p>
+                    <p className="text-sm font-bold text-slate-500 mb-1">{t('current_balance_debt')}</p>
                     <div className="flex items-center gap-3">
                       <h2 className={cn("text-3xl font-black", (supplierDetails.debt || 0) > 0 ? "text-red-500" : "text-green-500")}>
-                        {formatNumber(Math.abs(supplierDetails.debt || 0))} درهم
+                        {formatNumber(Math.abs(supplierDetails.debt || 0))} {t('mad')}
                       </h2>
-                      {(supplierDetails.debt || 0) > 0 && <span className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-bold">عليك</span>}
-                      {(supplierDetails.debt || 0) < 0 && <span className="bg-green-500/10 text-green-500 px-2 py-1 rounded text-xs font-bold">لك</span>}
+                      {(supplierDetails.debt || 0) > 0 && <span className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-bold">{t('owed_by_you')}</span>}
+                      {(supplierDetails.debt || 0) < 0 && <span className="bg-green-500/10 text-green-500 px-2 py-1 rounded text-xs font-bold">{t('owed_to_you')}</span>}
                     </div>
                   </div>
                   {true && (
                     <button onClick={() => setAdjustDebtModal(supplierDetails)} className="px-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-md shadow-primary/20 transition-all flex items-center gap-2">
-                      <DollarSign className="w-5 h-5" /> إدارة الديون
+                      <DollarSign className="w-5 h-5" /> {t('manage_debts')}
                     </button>
                   )}
                 </div>
 
                 <div>
                   <h4 className="font-black text-slate-900 mb-4 flex items-center gap-2">
-                    <Archive className="w-5 h-5 text-primary" /> سجل المعاملات والديون
+                    <Archive className="w-5 h-5 text-primary" />{t('transaction_history_debts')}
                   </h4>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
                     <table className="w-full text-right">
@@ -314,32 +314,32 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                             <td colSpan={4} className="p-8 text-center text-slate-500 font-bold text-sm">{t('no_previous_transactions')}</td>
                           </tr>
                         ) : (
-                          supplierDetails.transactions.map((t:any) => (
-                            <tr key={t.id} className="hover:bg-white/50 transition-colors">
+                          supplierDetails.transactions.map((tx:any) => (
+                            <tr key={tx.id} className="hover:bg-white/50 transition-colors">
                               <td className="p-3 text-sm font-bold text-slate-500" dir="ltr">
-                                {new Date(t.date).toLocaleString('fr-FR')}
+                                {new Date(tx.date).toLocaleString('fr-FR')}
                               </td>
                               <td className="p-3">
-                                {t.type === 'charge' ? (
+                                {tx.type === 'charge' ? (
                                   <span className="inline-flex px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-500/20">
-                                    إضافة دين
+                                    {t('add_debt')}
                                   </span>
                                 ) : (
                                   <span className="inline-flex px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-                                    دفع مبلغ
+                                    {t('pay_supplier')}
                                   </span>
                                 )}
                               </td>
                               <td className="p-3">
-                                <span className={cn("text-sm font-black", t.type === 'charge' ? "text-red-500" : "text-green-500")}>
-                                  {t.type === 'charge' ? '+' : '-'}{formatNumber(t.amount)} درهم
+                                <span className={cn("text-sm font-black", tx.type === 'charge' ? "text-red-500" : "text-green-500")}>
+                                  {tx.type === 'charge' ? '+' : '-'}{formatNumber(tx.amount)} {t('mad')}
                                 </span>
                               </td>
                               <td className="p-3 text-sm text-text-secondary font-medium">
-                                {t.note || '—'}
-                                {t.paymentMethod === 'check' && (
+                                {tx.note || '—'}
+                                {tx.paymentMethod === 'check' && (
                                   <div className="mt-1 text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded inline-block font-bold">
-                                    شيك رقم: {t.checkNumber || '—'}
+                                    {t('check_label')}: {tx.checkNumber || '—'}
                                   </div>
                                 )}
                               </td>
@@ -363,7 +363,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <div className="p-6 border-b border-slate-200 bg-slate-50/30">
                 <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <DollarSign className="w-6 h-6 text-primary" />
-                  إدارة ديون المورد
+                  {t('manage_supplier_debt')}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1 font-bold">{adjustDebtModal.name}</p>
               </div>
@@ -372,28 +372,28 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="pay" defaultChecked className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-green-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      دفع مبلغ للمورد
+                      {t('pay_supplier')}
                     </div>
                   </label>
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="add" className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-red-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      إضافة دين جديد
+                      {t('add_new_debt')}
                     </div>
                   </label>
                 </div>
                 
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">المبلغ *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('amount_label')}</label>
                   <div className="relative">
-                    <input name="amount" required type="number" step="0.01" min="0.01" placeholder="مثال: 500" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-2xl font-black text-center focus:border-primary outline-none transition-all" />
+                    <input name="amount" required type="number" step="0.01" min="0.01" placeholder="500" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-2xl font-black text-center focus:border-primary outline-none transition-all" />
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black">{t('mad')}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">ملاحظة أو وصف</label>
-                  <input name="note" type="text" placeholder="مثال: دفعة من حساب فاتورة شهر 5..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('note_or_desc')}</label>
+                  <input name="note" type="text" placeholder={t('example_note')} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
                 </div>
 
                 <div className="space-y-3 pt-2">
@@ -405,7 +405,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                         if(checkDiv) checkDiv.style.display = 'none';
                       }} />
                       <div className="py-2.5 text-center rounded-xl text-sm font-bold text-slate-500 border border-slate-200 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all">
-                        نقدي (Cash)
+                        {t('cash_cash')}
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer">
@@ -421,8 +421,8 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                 </div>
 
                 <div id={'check-input-div-' + (adjustDebtModal?.id || '')} style={{display: 'none'}}>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">رقم الشيك</label>
-                  <input name="checkNumber" type="text" placeholder="أدخل رقم الشيك هنا..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('check_number')}</label>
+                  <input name="checkNumber" type="text" placeholder={t('check_number_placeholder')} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all font-medium" />
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -442,7 +442,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
                 <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <Truck className="w-6 h-6 text-primary" />
-                  {editingSupplier ? 'تعديل المورد' : 'إضافة مورد جديد'}
+                  {editingSupplier ? t('edit_supplier_title') : t('add_supplier_title')}
                 </h3>
                 <button onClick={() => setShowAddSupplierModal(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors">
                   <X className="w-5 h-5" />
@@ -451,12 +451,12 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
               <form onSubmit={handleSaveSupplier} className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">اسم المورد أو الشركة *</label>
-                    <input autoFocus required type="text" placeholder="مثال: شركة الحليب..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('supplier_name_label')}</label>
+                    <input autoFocus required type="text" placeholder={t('milk_company')} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium" value={name} onChange={e => setName(e.target.value)} />
                   </div>
                   
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">رقم الهاتف</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('phone_label')}</label>
                     <input type="text" placeholder="06..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
 
@@ -466,8 +466,8 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
                   </div>
 
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">العنوان</label>
-                    <input type="text" placeholder="عنوان المورد..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={address} onChange={e => setAddress(e.target.value)} />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('address_label')}</label>
+                    <input type="text" placeholder={t('address_optional')} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={address} onChange={e => setAddress(e.target.value)} />
                   </div>
 
                   <div className="space-y-1 md:col-span-2">
@@ -478,7 +478,7 @@ export default function GamraSupplierView({ permissions, appData, setAppData, la
 
                 <div className="mt-8 flex gap-3">
                   <button type="button" onClick={() => setShowAddSupplierModal(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-black uppercase tracking-widest hover:border-text-secondary/30 transition-all">{t('cancel')}</button>
-                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ المورد</button>
+                  <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">{t('save_supplier')}</button>
                 </div>
               </form>
             </motion.div>

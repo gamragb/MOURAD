@@ -156,7 +156,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
+    if (confirm(t('confirm_delete_category'))) {
       await api.deleteCategory(id);
     }
   };
@@ -193,11 +193,11 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
             <Package className="w-7 h-7 text-primary" />{t('products_and_inventory')}</h1>
-          <p className="text-slate-500 text-sm mt-1">إدارة منتجاتك، وتصنيفاتك، ومتابعة الكميات بكل سهولة</p>
+          <p className="text-slate-500 text-sm mt-1">{t('products_management_desc')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowCategoryModal(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-border-subtle transition-all font-bold text-sm shadow-sm">
-            <LayoutGrid className="w-4 h-4" /> التصنيفات
+            <LayoutGrid className="w-4 h-4" />{t('categories_btn')}
           </button>
           <button onClick={openAddModal} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />{t('add_product')}</button>
@@ -205,8 +205,8 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Boxes} title="إجمالي المنتجات" value={totalProducts} colorClass="bg-blue-500/10 text-blue-500" />
-        <StatCard icon={DollarSign} title="قيمة المخزون" value={formatNumber(totalValue) + " درهم"} colorClass="bg-green-500/10 text-green-500" />
+        <StatCard icon={Boxes} title={t('total_products_label')} value={totalProducts} colorClass="bg-blue-500/10 text-blue-500" />
+        <StatCard icon={DollarSign} title={t('stock_value_label')} value={formatNumber(totalValue) + " " + t('mad')} colorClass="bg-green-500/10 text-green-500" />
         <StatCard icon={AlertTriangle} title={t('products_low_stock')} value={lowStockCount} colorClass="bg-amber-500/10 text-amber-500" />
         <StatCard icon={X} title={t('products_out_of_stock')} value={outOfStockCount} colorClass="bg-red-500/10 text-red-500" />
       </div>
@@ -230,7 +230,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             onChange={(e) => setFilterCategoryId(e.target.value)}
             className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
           >
-            <option value="">كل التصنيفات</option>
+            <option value="">{t('all_categories')}</option>
             <option value="none">{t('no_category')}</option>
             {categories.map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -242,7 +242,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             onChange={(e) => setFilterStockStatus(e.target.value as any)}
             className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none cursor-pointer font-bold"
           >
-            <option value="all">كل الحالات</option>
+            <option value="all">{t('all_statuses')}</option>
             <option value="inStock">{t('status_available')}</option>
             <option value="lowStock">{t('status_low_stock')}</option>
             <option value="outOfStock">{t('status_out_of_stock')}</option>
@@ -257,19 +257,19 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             <thead className="bg-slate-50/50 border-b border-slate-200">
               <tr>
                 <th onClick={() => handleSort('name')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
-                  <div className="flex items-center gap-2">المنتج {sortConfig?.key === 'name' && <ArrowUpDown className="w-3 h-3" />}</div>
+                  <div className="flex items-center gap-2">{t('product_label')} {sortConfig?.key === 'name' && <ArrowUpDown className="w-3 h-3" />}</div>
                 </th>
-                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">التصنيف / المورد</th>
+                <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest">{t('category_supplier_label')}</th>
                 <th onClick={() => handleSort('qty')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
-                  <div className="flex items-center gap-2">الكمية {sortConfig?.key === 'qty' && <ArrowUpDown className="w-3 h-3" />}</div>
+                  <div className="flex items-center gap-2">{t('quantity')} {sortConfig?.key === 'qty' && <ArrowUpDown className="w-3 h-3" />}</div>
                 </th>
                 {true && (
                   <th onClick={() => handleSort('costPrice')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
-                    <div className="flex items-center gap-2">ثمن الشراء {sortConfig?.key === 'costPrice' && <ArrowUpDown className="w-3 h-3" />}</div>
-                  </th>
-                )}
+                  <div className="flex items-center gap-2">{t('purchase_price')} {sortConfig?.key === 'costPrice' && <ArrowUpDown className="w-3 h-3" />}</div>
+                </th>
+              )}
                 <th onClick={() => handleSort('price')} className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors select-none">
-                  <div className="flex items-center gap-2">ثمن البيع {sortConfig?.key === 'price' && <ArrowUpDown className="w-3 h-3" />}</div>
+                  <div className="flex items-center gap-2">{t('sale_price')} {sortConfig?.key === 'price' && <ArrowUpDown className="w-3 h-3" />}</div>
                 </th>
                 <th className="p-4 text-xs font-black text-slate-500 uppercase tracking-widest text-left">{t('actions')}</th>
               </tr>
@@ -280,8 +280,8 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                   <td colSpan={6} className="p-8 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-3">
                       <Archive className="w-12 h-12 opacity-20" />
-                      <p className="font-bold text-lg">لا توجد منتجات</p>
-                      <p className="text-sm">لم يتم العثور على أي منتج يطابق بحثك.</p>
+                      <p className="font-bold text-lg">{t('no_products_found').split('.')[0]}</p>
+                      <p className="text-sm">{t('no_products_found')}</p>
                     </div>
                   </td>
                 </tr>
@@ -319,14 +319,14 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                         </div>
                       </td>
                       {true && (
-                        <td className="p-4 font-bold text-slate-500 text-sm">{formatNumber(p.costPrice)} درهم</td>
+                        <td className="p-4 font-bold text-slate-500 text-sm">{formatNumber(p.costPrice)} {t('mad')}</td>
                       )}
-                      <td className="p-4 font-black text-slate-900 text-sm">{formatNumber(p.price)} درهم</td>
+                      <td className="p-4 font-black text-slate-900 text-sm">{formatNumber(p.price)} {t('mad')}</td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => setAdjustModal(p)} className="p-2 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors group relative">
                             <ArrowUpDown className="w-4 h-4" />
-                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">تعديل المخزون</span>
+                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-main text-bg-base text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{t('adjust_stock')}</span>
                           </button>
                           <button onClick={() => openEditModal(p)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors">
                             <Edit2 className="w-4 h-4" />
@@ -354,21 +354,21 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
               <div className="p-8">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-8">
                   <Plus className="w-4 h-4 text-indigo-600" />
-                  {editingProduct ? 'MODIFIER UN PRODUIT' : 'AJOUTER UN PRODUIT'}
+                  {editingProduct ? t('edit_product_title') : t('add_product_title')}
                 </h3>
                 
                 <form onSubmit={handleSaveProduct} className="space-y-6">
                   {/* Row 1 */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOM DU PRODUIT</label>
-                      <input autoFocus required type="text" placeholder="Nom du Produit" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={name} onChange={e => setName(e.target.value)} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('product_name_label')}</label>
+                      <input autoFocus required type="text" placeholder={t('product_name_label').replace(' *','')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={name} onChange={e => setName(e.target.value)} />
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CATÉGORIE</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('category')}</label>
                       <select className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all cursor-pointer font-medium text-slate-700" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-                        <option value="">Non Classé</option>
+                        <option value="">{t('no_category')}</option>
                         {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
@@ -377,45 +377,45 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                   {/* Row 2 */}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     <div className="space-y-2 md:col-span-3">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CODE-BARRES</label>
-                      <input type="text" placeholder="Code-barres" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={barcode} onChange={e => setBarcode(e.target.value)} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('barcode_label')}</label>
+                      <input type="text" placeholder={t('barcode_label')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={barcode} onChange={e => setBarcode(e.target.value)} />
                     </div>
 
                     <div className="space-y-2 md:col-span-3 relative">
                       <div className="flex items-center justify-between px-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">FOURNISSEUR</label>
-                        <button type="button" className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors">+ NEW</button>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('supplier')}</label>
+                        <button type="button" className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors">+ {t('add_supplier')}</button>
                       </div>
                       <select className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all cursor-pointer font-medium text-slate-700" value={supplier} onChange={e => setSupplier(e.target.value)}>
-                        <option value="">Select Supplier</option>
+                        <option value="">{t('supplier_select')}</option>
                         {suppliers.map((s:any) => <option key={s.id} value={s.name}>{s.name}</option>)}
                       </select>
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PRIX D'ACHAT</label>
-                      <input type="number" step="0.01" min="0" placeholder="Prix d'Achat" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('purchase_price_label')}</label>
+                      <input type="number" step="0.01" min="0" placeholder={t('purchase_price')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PRIX DE VENTE</label>
-                      <input required type="number" step="0.01" min="0" placeholder="Prix de Vente" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={price} onChange={e => setPrice(e.target.value)} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('sale_price_label')}</label>
+                      <input required type="number" step="0.01" min="0" placeholder={t('sale_price')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={price} onChange={e => setPrice(e.target.value)} />
                     </div>
 
                     <div className="space-y-2 md:col-span-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">QUANTITÉ</label>
-                      <input required type="number" min="0" placeholder="Quantité" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-center" value={qty} onChange={e => setQty(e.target.value)} disabled={!!editingProduct} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('quantity_label')}</label>
+                      <input required type="number" min="0" placeholder={t('quantity')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-center" value={qty} onChange={e => setQty(e.target.value)} disabled={!!editingProduct} />
                     </div>
 
                     <div className="space-y-2 md:col-span-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ALERT</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('min_qty_alert')}</label>
                       <input required type="number" min="0" placeholder="5" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-center" value={minQty} onChange={e => setMinQty(e.target.value)} />
                     </div>
                   </div>
 
                   <div className="pt-4">
                     <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold uppercase tracking-widest transition-all">
-                      ENREGISTRER
+                      {t('save_product')}
                     </button>
                   </div>
                 </form>
@@ -436,33 +436,33 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
               <div className="p-8">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-8">
                   <Package className="w-5 h-5 text-indigo-600" />
-                  AJOUTER UNE CATÉGORIE
+                  {t('add_category_title')}
                 </h3>
                 
                 <form onSubmit={handleAddCategory} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOM DE LA CATÉGORIE</label>
-                    <input autoFocus required type="text" placeholder="Nom de la Catégorie" className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('category_name_label')}</label>
+                    <input autoFocus required type="text" placeholder={t('category_name_label').replace(' *','')} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
                   </div>
                   
                   <div className="pt-2">
                     <button type="submit" className="w-full py-4 bg-white border border-slate-200 text-slate-900 rounded-xl font-black uppercase tracking-widest hover:border-indigo-500 transition-all shadow-sm">
-                      ENREGISTRER
+                      {t('save_category')}
                     </button>
                   </div>
                 </form>
 
                 <div className="mt-12">
                   <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CATÉGORIES</h4>
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('categories_title')}</h4>
                     <button type="button" onClick={handleSetupDefaults} className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:text-indigo-800 transition-colors">
-                      <Plus className="w-3 h-3" /> SETUP DEFAULTS
+                      <Plus className="w-3 h-3" /> {t('setup_defaults')}
                     </button>
                   </div>
                   
                   <div className="flex flex-wrap gap-3 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2 pb-2">
                     {categories.length === 0 ? (
-                      <p className="text-slate-400 text-sm font-medium w-full text-center py-4">No categories added yet.</p>
+                      <p className="text-slate-400 text-sm font-medium w-full text-center py-4">{t('no_categories')}</p>
                     ) : categories.map((c: any) => (
                       <div key={c.id} className="group relative flex items-center justify-center px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl hover:border-indigo-500 transition-all cursor-default select-none">
                         <span className="text-xs font-black text-slate-900">{c.name}</span>
@@ -488,7 +488,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setAdjustModal(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" dir="rtl">
               <div className="p-6 border-b border-slate-200 bg-slate-50/30">
-                <h3 className="text-xl font-black text-slate-900">تعديل المخزون</h3>
+                <h3 className="text-xl font-black text-slate-900">{t('adjust_stock_title')}</h3>
                 <p className="text-sm text-slate-500 mt-1 font-medium">{adjustModal.name}</p>
               </div>
               <form onSubmit={async (e) => {
@@ -506,13 +506,13 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="in" defaultChecked className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-green-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      إضافة كمية
+                      {t('add_quantity')}
                     </div>
                   </label>
                   <label className="flex-1 cursor-pointer">
                     <input type="radio" name="type" value="out" className="peer sr-only" />
                     <div className="py-2.5 text-center rounded-lg text-sm font-bold text-slate-500 peer-checked:bg-red-500 peer-checked:text-white transition-all peer-checked:shadow-md">
-                      سحب كمية
+                      {t('withdraw_quantity')}
                     </div>
                   </label>
                 </div>
@@ -524,7 +524,7 @@ export default function GamraStockView({ permissions, appData, setAppData, langu
 
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setAdjustModal(null)} className="flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl font-bold uppercase tracking-widest hover:bg-border-subtle transition-all">{t('cancel')}</button>
-                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">تأكيد</button>
+                  <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">{t('confirm_btn')}</button>
                 </div>
               </form>
             </motion.div>
